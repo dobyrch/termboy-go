@@ -15,7 +15,7 @@ const ROW_2 byte = 0x20
 const SCREEN_WIDTH int = 160
 const SCREEN_HEIGHT int = 144
 
-//var DefaultControlScheme ControlScheme = ControlScheme{glfw.KeyUp, glfw.KeyDown, glfw.KeyLeft, glfw.KeyRight, 90, 88, 294, 288}
+var DefaultControlScheme ControlScheme = ControlScheme{'W', 'S', 'A', 'D', 90, 88, 294, 288}
 
 type ControlScheme struct {
 	UP     int
@@ -150,9 +150,8 @@ func (i *IO) Init(title string, screenSize int, onCloseHandler func()) error {
 		return err
 	}
 
-	/*
 	i.KeyHandler.Init(DefaultControlScheme) //TODO: allow user to define controlscheme
-	glfw.SetKeyCallback(func(key, state int) {
+	/*glfw.SetKeyCallback(func(key, state int) {
 		if state == glfw.KeyPress {
 			i.KeyHandler.KeyDown(key)
 		} else {
