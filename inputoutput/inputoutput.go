@@ -3,8 +3,6 @@ package inputoutput
 import (
 	"github.com/dobyrch/termboy-go/components"
 	"github.com/dobyrch/termboy-go/constants"
-	"github.com/go-gl/gl"
-	"github.com/go-gl/glfw"
 	"log"
 	"github.com/dobyrch/termboy-go/types"
 	"fmt"
@@ -17,7 +15,7 @@ const ROW_2 byte = 0x20
 const SCREEN_WIDTH int = 160
 const SCREEN_HEIGHT int = 144
 
-var DefaultControlScheme ControlScheme = ControlScheme{glfw.KeyUp, glfw.KeyDown, glfw.KeyLeft, glfw.KeyRight, 90, 88, 294, 288}
+//var DefaultControlScheme ControlScheme = ControlScheme{glfw.KeyUp, glfw.KeyDown, glfw.KeyLeft, glfw.KeyRight, 90, 88, 294, 288}
 
 type ControlScheme struct {
 	UP     int
@@ -138,18 +136,21 @@ func NewIO() *IO {
 }
 
 func (i *IO) Init(title string, screenSize int, onCloseHandler func()) error {
+	/*
 	var err error
 
 	err = glfw.Init()
 	if err != nil {
 		return err
 	}
+	*/
 
-	err = i.Display.init(title, screenSize)
+	err := i.Display.init(title, screenSize)
 	if err != nil {
 		return err
 	}
 
+	/*
 	i.KeyHandler.Init(DefaultControlScheme) //TODO: allow user to define controlscheme
 	glfw.SetKeyCallback(func(key, state int) {
 		if state == glfw.KeyPress {
@@ -165,6 +166,32 @@ func (i *IO) Init(title string, screenSize int, onCloseHandler func()) error {
 		onCloseHandler()
 		return 0
 	})
+	*/
+
+	return nil
+}
+
+//This will wait for updates to the display or audio and dispatch them accordingly
+func (i *IO) Run() {
+	for {
+		select {
+		case data := <-i.ScreenOutputChannel:
+			i.Display.drawFrame(data)
+		case data := <-i.AudioOutputChannel:
+			log.Println("Writing %d to audio!", data)
+		}
+	}
+}
+
+type Display struct {
+	Name                 string
+	ScreenSizeMultiplier int
+}
+
+func (s *Display) init(title string, screenSizeMultiplier int) error {
+	//TODO: use ScreenSizeMultiplier as an indicator of whether to use
+	//TODO: left half block or top half block
+	//TODO: Perhaps use escape code to set title of terminal?
 
 	//TODO: wrap all ansii prints in its own class with methods for each func
         //TODO: show the cursor after termination
@@ -188,78 +215,7 @@ func (i *IO) Init(title string, screenSize int, onCloseHandler func()) error {
 	return nil
 }
 
-//This will wait for updates to the display or audio and dispatch them accordingly
-func (i *IO) Run() {
-	for {
-		select {
-		case data := <-i.ScreenOutputChannel:
-			i.Display.drawFrame(data)
-		case data := <-i.AudioOutputChannel:
-			log.Println("Writing %d to audio!", data)
-		}
-	}
-}
-
-type Display struct {
-	Name                 string
-	ScreenSizeMultiplier int
-}
-
-func (s *Display) init(title string, screenSizeMultiplier int) error {
-	s.Name = PREFIX + "-SCREEN"
-
-	log.Printf("%s: Initialising display", s.Name)
-	var err error
-
-	s.ScreenSizeMultiplier = screenSizeMultiplier
-	log.Printf("%s: Set screen size multiplier to %dx", s.Name, s.ScreenSizeMultiplier)
-
-	glfw.OpenWindowHint(glfw.WindowNoResize, 1)
-	err = glfw.OpenWindow(SCREEN_WIDTH*s.ScreenSizeMultiplier, SCREEN_HEIGHT*s.ScreenSizeMultiplier, 0, 0, 0, 0, 0, 0, glfw.Windowed)
-	if err != nil {
-		return err
-	}
-
-	glfw.SetWindowTitle(title)
-
-	//resize function
-	onResize := func(w, h int) {
-		gl.Viewport(0, 0, w, h)
-		gl.MatrixMode(gl.PROJECTION)
-		gl.LoadIdentity()
-		gl.Ortho(0, float64(w), float64(h), 0, -1, 1)
-		gl.ClearColor(0.255, 0.255, 0.255, 0)
-		gl.Clear(gl.COLOR_BUFFER_BIT)
-		gl.MatrixMode(gl.MODELVIEW)
-		gl.LoadIdentity()
-	}
-
-	glfw.SetWindowSizeCallback(onResize)
-	desktopMode := glfw.DesktopMode()
-	glfw.SetWindowPos((desktopMode.W-SCREEN_WIDTH*s.ScreenSizeMultiplier)/2, (desktopMode.H-SCREEN_HEIGHT*s.ScreenSizeMultiplier)/2)
-
-	gl.ClearColor(0.255, 0.255, 0.255, 0)
-
-	return nil
-
-}
-
 func (s *Display) drawFrame(screenData *types.Screen) {
-	gl.Clear(gl.COLOR_BUFFER_BIT)
-	gl.Disable(gl.DEPTH_TEST)
-	gl.PointSize(float32(s.ScreenSizeMultiplier) + 1.0)
-	gl.Begin(gl.POINTS)
-	for y := 0; y < SCREEN_HEIGHT; y++ {
-		for x := 0; x < SCREEN_WIDTH; x++ {
-			var pixel types.RGB = screenData[y][x]
-			gl.Color3ub(pixel.Red, pixel.Green, pixel.Blue)
-			gl.Vertex2i(x*s.ScreenSizeMultiplier, y*s.ScreenSizeMultiplier)
-		}
-	}
-
-	gl.End()
-	glfw.SwapBuffers()
-
 	for y := 0; y < SCREEN_HEIGHT; y += 2 {
                 for x := 0; x < SCREEN_WIDTH; x++ {
                         c1 := screenData[y][x].Red
