@@ -183,12 +183,19 @@ func (i *IO) Run() {
 	}
 }
 
+type coord struct {
+	x int
+	y int
+}
+
 type Display struct {
 	Name                 string
 	ScreenSizeMultiplier int
+	Screen map[coord]byte
 }
 
 func (s *Display) init(title string, screenSizeMultiplier int) error {
+	s.Screen = make(map[coord]byte)
 	//TODO: use ScreenSizeMultiplier as an indicator of whether to use
 	//TODO: left half block or top half block
 	//TODO: Perhaps use escape code to set title of terminal?
@@ -220,45 +227,49 @@ func (s *Display) drawFrame(screenData *types.Screen) {
                 for x := 0; x < SCREEN_WIDTH; x++ {
                         c1 := screenData[y][x].Red
                         c2 := screenData[y+1][x].Red
-                        var fg, bg int
 
-                        /*switch {
-                        case c1 < 100:
-                                fmt.Printf("%c[30m%c", ESC, '█')
-                        default:
-                                fmt.Printf("%c[37m%c", ESC, '█')
-                        }*/
+			if (s.Screen[coord{x, y}] != c1 ||
+			    s.Screen[coord{x, y+1}] != c2) {
+				s.Screen[coord{x, y}] = c1
+				s.Screen[coord{x, y+1}] = c2
+				var fg, bg int
 
-                        //TODO: in ansii class, set color/bold attr and append codes as needed
-                        //TODO: (and define all codes as consts)
-                        switch c1 {
-                        case 0:
-                                fg = 30
-                        case 96:
-                                fg = 34
-                        case 196:
-                                fg = 36
-                        case 235:
-                                fg = 37
-                        }
+				/*switch {
+				case c1 < 100:
+					fmt.Printf("%c[30m%c", ESC, '█')
+				default:
+					fmt.Printf("%c[37m%c", ESC, '█')
+				}*/
 
-                        switch c2 {
-                        case 0:
-                                bg = 40
-                        case 96:
-                                bg = 44
-                        case 196:
-                                bg = 46
-                        case 235:
-                                bg = 47
-                        }
+				//TODO: in ansii class, set color/bold attr and append codes as needed
+				//TODO: (and define all codes as consts)
+				switch c1 {
+				case 0:
+					fg = 30
+				case 96:
+					fg = 34
+				case 196:
+					fg = 36
+				case 235:
+					fg = 37
+				}
 
-                        //TODO: have a 'big' and 'small' mode (top/left half)
-                        //TODO: check if setfont is available on BSD and can change height
-                        fmt.Printf("%c[%d;%dm%c", ESC, fg, bg, '▀')
+				switch c2 {
+				case 0:
+					bg = 40
+				case 96:
+					bg = 44
+				case 196:
+					bg = 46
+				case 235:
+					bg = 47
+				}
+
+				fmt.Printf("%c[%d;%dH", ESC, y/2 + 1, x + 1)
+				//TODO: have a 'big' and 'small' mode (top/left half)
+				//TODO: check if setfont is available on BSD and can change height
+				fmt.Printf("%c[%d;%dm%c", ESC, fg, bg, '▀')
+			}
                 }
-                fmt.Printf("%c[E", ESC)
         }
-
-        fmt.Printf("%c[H", ESC)
 }
