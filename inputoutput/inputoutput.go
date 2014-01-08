@@ -7,9 +7,11 @@ import (
 	"github.com/go-gl/glfw"
 	"log"
 	"github.com/dobyrch/termboy-go/types"
+	"fmt"
 )
 
 const PREFIX string = "IO"
+const ESC byte = 0x1B
 const ROW_1 byte = 0x10
 const ROW_2 byte = 0x20
 const SCREEN_WIDTH int = 160
@@ -164,6 +166,25 @@ func (i *IO) Init(title string, screenSize int, onCloseHandler func()) error {
 		return 0
 	})
 
+	//TODO: wrap all ansii prints in its own class with methods for each func
+        //TODO: show the cursor after termination
+        fmt.Printf("%c[?25l", ESC) //Hide the cursor
+        fmt.Printf("%c[2J", ESC) //Clear screen
+        fmt.Printf("%c[H", ESC) //Position cursor in top left
+
+        /*for i := 0; i < 256; i++ {
+                fmt.Printf("%c[48;5;%dm%d\n", ESC, i, i)
+        }*/
+        //TODO: see end of wiki article to prevent hanging on non-linux systems
+        fmt.Printf("%c]P0000000", ESC)
+        fmt.Printf("%c]P4555555", ESC)
+        fmt.Printf("%c]P6AAAAAA", ESC)
+        fmt.Printf("%c]P7FFFFFF", ESC)
+        fmt.Printf("%c]P8000000", ESC)
+        fmt.Printf("%c]PC555555", ESC)
+        fmt.Printf("%c]PEAAAAAA", ESC)
+        fmt.Printf("%c]PFFFFFFF", ESC)
+
 	return nil
 }
 
@@ -238,4 +259,50 @@ func (s *Display) drawFrame(screenData *types.Screen) {
 
 	gl.End()
 	glfw.SwapBuffers()
+
+	for y := 0; y < SCREEN_HEIGHT; y += 2 {
+                for x := 0; x < SCREEN_WIDTH; x++ {
+                        c1 := screenData[y][x].Red
+                        c2 := screenData[y+1][x].Red
+                        var fg, bg int
+
+                        /*switch {
+                        case c1 < 100:
+                                fmt.Printf("%c[30m%c", ESC, '█')
+                        default:
+                                fmt.Printf("%c[37m%c", ESC, '█')
+                        }*/
+
+                        //TODO: in ansii class, set color/bold attr and append codes as needed
+                        //TODO: (and define all codes as consts)
+                        switch c1 {
+                        case 0:
+                                fg = 30
+                        case 96:
+                                fg = 34
+                        case 196:
+                                fg = 36
+                        case 235:
+                                fg = 37
+                        }
+
+                        switch c2 {
+                        case 0:
+                                bg = 40
+                        case 96:
+                                bg = 44
+                        case 196:
+                                bg = 46
+                        case 235:
+                                bg = 47
+                        }
+
+                        //TODO: have a 'big' and 'small' mode (top/left half)
+                        //TODO: check if setfont is available on BSD and can change height
+                        fmt.Printf("%c[%d;%dm%c", ESC, fg, bg, '▀')
+                }
+                fmt.Printf("%c[E", ESC)
+        }
+
+        fmt.Printf("%c[H", ESC)
 }
