@@ -209,14 +209,14 @@ func (s *Display) init(title string, screenSizeMultiplier int) error {
                 fmt.Printf("%c[48;5;%dm%d\n", ESC, i, i)
         }*/
         //TODO: see end of wiki article to prevent hanging on non-linux systems
-        fmt.Printf("%c]P0000000", ESC)
-        fmt.Printf("%c]P4555555", ESC)
-        fmt.Printf("%c]P6AAAAAA", ESC)
-        fmt.Printf("%c]P7FFFFFF", ESC)
-        fmt.Printf("%c]P8000000", ESC)
-        fmt.Printf("%c]PC555555", ESC)
-        fmt.Printf("%c]PEAAAAAA", ESC)
-        fmt.Printf("%c]PFFFFFFF", ESC)
+        fmt.Printf("%c]P0000000%c\\", ESC, ESC)
+        fmt.Printf("%c]P4555555%c\\", ESC, ESC)
+        fmt.Printf("%c]P6AAAAAA%c\\", ESC, ESC)
+        fmt.Printf("%c]P7FFFFFF%c\\", ESC, ESC)
+        fmt.Printf("%c]P8000000%c\\", ESC, ESC)
+        fmt.Printf("%c]PC555555%c\\", ESC, ESC)
+        fmt.Printf("%c]PEAAAAAA%c\\", ESC, ESC)
+        fmt.Printf("%c]PFFFFFFF%c\\", ESC, ESC)
 
 	return nil
 }
