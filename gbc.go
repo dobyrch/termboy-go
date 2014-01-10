@@ -12,9 +12,11 @@ import (
 	"log"
 	"github.com/dobyrch/termboy-go/mmu"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"runtime"
 	"strings"
+	"syscall"
 	"time"
 	"github.com/dobyrch/termboy-go/timer"
 	"github.com/dobyrch/termboy-go/types"
@@ -125,6 +127,7 @@ func (gbc *GomeboyColor) Run() {
 	}
 }
 
+//TODO: look for unused exported funcs and make private
 func (gbc *GomeboyColor) StoreFPSSample(sample int) {
 	gbc.fpsSamples = append(gbc.fpsSamples, sample)
 	if len(gbc.fpsSamples) == 5 {
@@ -140,8 +143,6 @@ func (gbc *GomeboyColor) StoreFPSSample(sample int) {
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	fmt.Printf("%s. %s\n", TITLE, VERSION)
-	fmt.Println("Copyright (c) 2013. Daniel James Harper.")
-	fmt.Println("http://djhworld.github.io/gomeboycolor")
 	fmt.Println(strings.Repeat("*", 120))
 
 	flag.Usage = PrintHelp
@@ -174,7 +175,6 @@ func main() {
 	}
 
 	fmt.Println(conf)
-
 	romFilename := flag.Arg(0)
 	cart, err := cartridge.NewCartridge(romFilename)
 	if err != nil {
@@ -226,6 +226,19 @@ func main() {
 	log.Println(strings.Repeat("*", 120))
 
 	log.Println("Starting emulator")
+
+	inputoutput.InitKeyboard()
+	sigc := make(chan os.Signal, 1)
+	signal.Notify(sigc,
+		syscall.SIGHUP,
+		syscall.SIGINT,
+		syscall.SIGTERM,
+		syscall.SIGQUIT)
+	go func() {
+		<-sigc
+		inputoutput.RestoreKeyboard()
+		log.Fatal("Thanks for playing!")
+	}()
 
 	//Starts emulator code in a goroutine
 	go gbc.Run()

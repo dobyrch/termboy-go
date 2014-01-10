@@ -3,9 +3,11 @@ package inputoutput
 import (
 	"github.com/dobyrch/termboy-go/components"
 	"github.com/dobyrch/termboy-go/constants"
-	"log"
 	"github.com/dobyrch/termboy-go/types"
 	"fmt"
+	"os"
+	"io"
+	"log"
 )
 
 const PREFIX string = "IO"
@@ -15,17 +17,19 @@ const ROW_2 byte = 0x20
 const SCREEN_WIDTH int = 160
 const SCREEN_HEIGHT int = 144
 
-var DefaultControlScheme ControlScheme = ControlScheme{'W', 'S', 'A', 'D', 90, 88, 294, 288}
+//TODO: move control related stuff to keyboard.go?
+//TODO: use var names in struct initializer for improved legibility
+var DefaultControlScheme ControlScheme = ControlScheme{0x21, 0x1F, 0x12, 0x20, 0x25, 0x24, 0x22, 0x23}
 
 type ControlScheme struct {
-	UP     int
-	DOWN   int
-	LEFT   int
-	RIGHT  int
-	A      int
-	B      int
-	START  int
-	SELECT int
+	RIGHT  byte
+	LEFT   byte
+	UP     byte
+	DOWN   byte
+	A      byte
+	B      byte
+	SELECT byte
+	START  byte
 }
 
 type KeyHandler struct {
@@ -75,55 +79,69 @@ func (k *KeyHandler) Write(addr types.Word, value byte) {
 }
 
 //released sets bit for key to 0
-func (k *KeyHandler) KeyDown(key int) {
+func (k *KeyHandler) KeyDown(key byte) {
 	k.irqHandler.RequestInterrupt(constants.JOYP_HILO_IRQ)
 	switch key {
-	case k.controlScheme.UP:
-		k.rows[0] &= 0xB
-	case k.controlScheme.DOWN:
-		k.rows[0] &= 0x7
-	case k.controlScheme.LEFT:
-		k.rows[0] &= 0xD
 	case k.controlScheme.RIGHT:
-		k.rows[0] &= 0xE
+		k.rows[0] &^= 0x1
+	case k.controlScheme.LEFT:
+		k.rows[0] &^= 0x2
+	case k.controlScheme.UP:
+		k.rows[0] &^= 0x4
+	case k.controlScheme.DOWN:
+		k.rows[0] &^= 0x8
 	case k.controlScheme.A:
-		k.rows[1] &= 0xE
+		k.rows[1] &^= 0x1
 	case k.controlScheme.B:
-		k.rows[1] &= 0xD
-	case k.controlScheme.START:
-		k.rows[1] &= 0x7
+		k.rows[1] &^= 0x2
 	case k.controlScheme.SELECT:
-		k.rows[1] &= 0xB
+		k.rows[1] &^= 0x4
+	case k.controlScheme.START:
+		k.rows[1] &^= 0x8
+	case 0x1:
+		//TODO: called single function for signals and intentional exits
+		//TODO: clean up screen on exit
+		RestoreKeyboard()
+		log.Fatal("Thanks for playing!")
 	}
 }
 
 //released sets bit for key to 1
-func (k *KeyHandler) KeyUp(key int) {
+func (k *KeyHandler) KeyUp(key byte) {
 	switch key {
+	case k.controlScheme.RIGHT:
+		k.rows[0] |= 0x1
+	case k.controlScheme.LEFT:
+		k.rows[0] |= 0x2
 	case k.controlScheme.UP:
 		k.rows[0] |= 0x4
 	case k.controlScheme.DOWN:
 		k.rows[0] |= 0x8
-	case k.controlScheme.LEFT:
-		k.rows[0] |= 0x2
-	case k.controlScheme.RIGHT:
-		k.rows[0] |= 0x1
 	case k.controlScheme.A:
 		k.rows[1] |= 0x1
 	case k.controlScheme.B:
 		k.rows[1] |= 0x2
-	case k.controlScheme.START:
-		k.rows[1] |= 0x8
 	case k.controlScheme.SELECT:
 		k.rows[1] |= 0x4
+	case k.controlScheme.START:
+		k.rows[1] |= 0x8
+	}
+}
+
+func (k *KeyHandler) keyEvent(key byte) {
+	if key & (1 << 7) != 0{
+		k.KeyUp(key &^ (1 << 7))
+	} else {
+		k.KeyDown(key)
 	}
 }
 
 type IO struct {
-	KeyHandler          *KeyHandler
-	Display             *Display
-	ScreenOutputChannel chan *types.Screen
-	AudioOutputChannel  chan int
+	KeyHandler           *KeyHandler
+	Display              *Display
+	ScreenOutputChannel  chan *types.Screen
+	AudioOutputChannel   chan int
+	KeyboardInputChannel chan byte
 }
 
 func NewIO() *IO {
@@ -132,52 +150,47 @@ func NewIO() *IO {
 	i.Display = new(Display)
 	i.ScreenOutputChannel = make(chan *types.Screen)
 	i.AudioOutputChannel = make(chan int)
+	i.KeyboardInputChannel = make(chan byte)
 	return i
 }
 
 func (i *IO) Init(title string, screenSize int, onCloseHandler func()) error {
-	/*
-	var err error
-
-	err = glfw.Init()
-	if err != nil {
-		return err
-	}
-	*/
+	//TODO: call onCloseHandler in gbc upon receiving signal
+	//TODO: put RestoreKeyboard in onCloseHandler if appropriate
 
 	err := i.Display.init(title, screenSize)
+	//TODO: Is it necesssary to return an error?
 	if err != nil {
 		return err
 	}
 
 	i.KeyHandler.Init(DefaultControlScheme) //TODO: allow user to define controlscheme
-	/*glfw.SetKeyCallback(func(key, state int) {
-		if state == glfw.KeyPress {
-			i.KeyHandler.KeyDown(key)
-		} else {
-			i.KeyHandler.KeyUp(key)
-		}
-	})
-
-	glfw.SetWindowCloseCallback(func() int {
-		glfw.CloseWindow()
-		glfw.Terminate()
-		onCloseHandler()
-		return 0
-	})
-	*/
 
 	return nil
 }
 
 //This will wait for updates to the display or audio and dispatch them accordingly
 func (i *IO) Run() {
+	go i.pollStdin()
 	for {
 		select {
 		case data := <-i.ScreenOutputChannel:
 			i.Display.drawFrame(data)
 		case data := <-i.AudioOutputChannel:
 			log.Println("Writing %d to audio!", data)
+		case data := <-i.KeyboardInputChannel:
+			i.KeyHandler.keyEvent(data)
+		}
+	}
+}
+
+func (i *IO) pollStdin() {
+	var b = make([]byte, 1)
+
+	for {
+		_, err := io.ReadFull(os.Stdin, b)
+		if (err == nil) {
+			i.KeyboardInputChannel <-b[0]
 		}
 	}
 }
@@ -205,10 +218,6 @@ func (s *Display) init(title string, screenSizeMultiplier int) error {
         fmt.Printf("%c[2J", ESC) //Clear screen
         fmt.Printf("%c[H", ESC) //Position cursor in top left
 
-        /*for i := 0; i < 256; i++ {
-                fmt.Printf("%c[48;5;%dm%d\n", ESC, i, i)
-        }*/
-        //TODO: see end of wiki article to prevent hanging on non-linux systems
         fmt.Printf("%c]P0000000%c\\", ESC, ESC)
         fmt.Printf("%c]P4555555%c\\", ESC, ESC)
         fmt.Printf("%c]P6AAAAAA%c\\", ESC, ESC)
@@ -232,13 +241,6 @@ func (s *Display) drawFrame(screenData *types.Screen) {
 				s.Screen[coord{x, y}] = c1
 				s.Screen[coord{x, y+1}] = c2
 				var fg, bg int
-
-				/*switch {
-				case c1 < 100:
-					fmt.Printf("%c[30m%c", ESC, '█')
-				default:
-					fmt.Printf("%c[37m%c", ESC, '█')
-				}*/
 
 				//TODO: in ansii class, set color/bold attr and append codes as needed
 				//TODO: (and define all codes as consts)
