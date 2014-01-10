@@ -5,20 +5,14 @@ import (
 	"github.com/dobyrch/termboy-go/types"
 )
 
-type coord struct {
-        x int
-        y int
-}
-
 type Display struct {
         Name                 string
         ScreenSizeMultiplier int
         //TODO: try using array instead
-        Screen map[coord]byte
+        lastFrame            types.Screen
 }
 
 func (s *Display) init(title string, screenSizeMultiplier int) error {
-        s.Screen = make(map[coord]byte)
         //TODO: use ScreenSizeMultiplier as an indicator of whether to use
         //TODO: left half block or top half block
         //TODO: Perhaps use escape code to set title of terminal?
@@ -43,18 +37,18 @@ func (s *Display) init(title string, screenSizeMultiplier int) error {
 func (s *Display) drawFrame(screenData *types.Screen) {
         for y := 0; y < SCREEN_HEIGHT; y += 2 {
                 for x := 0; x < SCREEN_WIDTH; x++ {
-                        c1 := screenData[y][x].Red
-                        c2 := screenData[y+1][x].Red
+                        c1 := screenData[y][x]
+                        c2 := screenData[y+1][x]
 
-                        if (s.Screen[coord{x, y}] != c1 ||
-                            s.Screen[coord{x, y+1}] != c2) {
-                                s.Screen[coord{x, y}] = c1
-                                s.Screen[coord{x, y+1}] = c2
+                        if (s.lastFrame[y][x] != c1 ||
+                            s.lastFrame[y+1][x] != c2) {
+                                s.lastFrame[y][x] = c1
+                                s.lastFrame[y+1][x] = c2
+
                                 var fg, bg int
-
                                 //TODO: in ansii class, set color/bold attr and append codes as needed
                                 //TODO: (and define all codes as consts)
-                                switch c1 {
+                                switch c1.Red {
                                 case 0:
                                         fg = 30
                                 case 96:
@@ -65,7 +59,7 @@ func (s *Display) drawFrame(screenData *types.Screen) {
                                         fg = 37
                                 }
 
-                                switch c2 {
+                                switch c2.Red {
                                 case 0:
                                         bg = 40
                                 case 96:
