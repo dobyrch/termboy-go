@@ -198,7 +198,7 @@ func (config *Config) ConfigureSettingsDirectory() error {
 		return err
 	}
 
-	config.SettingsDir = filepath.Join(usr.HomeDir, "."+TITLE)
+	config.SettingsDir = filepath.Join(usr.HomeDir, ".config/"+TITLE)
 
 	if ok, _ := utils.Exists(config.SettingsDir); !ok {
 //		log.Println("Creating settings directory: ", config.SettingsDir)

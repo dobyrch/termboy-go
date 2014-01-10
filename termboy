@@ -1,2 +1,9 @@
 #!/usr/bin/sh
+
+if [ $TERM != 'linux' ]; then
+	echo 'Term Boy can only be run in a virtual console'
+	echo '(Try pressing CTRL+ALT+F2)'
+	exit 1
+fi
+
 setfont -h4 && termboy-go $1 ; setfont

@@ -26,7 +26,7 @@ import (
 )
 
 const FRAME_CYCLES = 70224
-const TITLE string = "gomeboycolor"
+const TITLE string = "termboy"
 
 var VERSION string
 
