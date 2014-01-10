@@ -5,7 +5,7 @@ import (
 	"github.com/dobyrch/termboy-go/components"
 	"github.com/dobyrch/termboy-go/constants"
 	"errors"
-	"fmt"
+	//"fmt"
 	"log"
 	"sort"
 	"github.com/dobyrch/termboy-go/types"
@@ -78,7 +78,7 @@ func NewGbcMMU() *GbcMMU {
 }
 
 func (mmu *GbcMMU) Reset() {
-	log.Println(PREFIX+": Resetting", PREFIX)
+//	log.Println(PREFIX+": Resetting", PREFIX)
 	mmu.inBootMode = true
 	mmu.interruptsFlag = 0x00
 	mmu.cgbWramBankSelectedRegister = 0x00
@@ -130,7 +130,7 @@ func (mmu *GbcMMU) WriteByte(addr types.Word, value byte) {
 			mmu.zeroPageRAM[addr&(0xFFFF-0xFF80)] = value
 		}
 	default:
-		//log.Printf("%s: WARNING - Attempting to write 0x%X to address %s, this is invalid/unimplemented", PREFIX, value, addr)
+//		//log.Printf("%s: WARNING - Attempting to write 0x%X to address %s, this is invalid/unimplemented", PREFIX, value, addr)
 	}
 }
 
@@ -180,7 +180,7 @@ func (mmu *GbcMMU) ReadByte(addr types.Word) byte {
 			return mmu.zeroPageRAM[addr&(0xFFFF-0xFF80)]
 		}
 	default:
-		//log.Printf("%s: WARNING - Attempting to read from address %s, this is invalid/unimplemented", PREFIX, addr)
+//		//log.Printf("%s: WARNING - Attempting to read from address %s, this is invalid/unimplemented", PREFIX, addr)
 	}
 
 	return 0x00
@@ -205,10 +205,10 @@ func (mmu *GbcMMU) SetInBootMode(mode bool) {
 
 func (mmu *GbcMMU) ConnectPeripheral(p components.Peripheral, startAddr, endAddr types.Word) {
 	if startAddr == endAddr {
-		log.Printf("%s: Connecting MMU to %s on address %s", PREFIX, p.Name(), startAddr)
+//		log.Printf("%s: Connecting MMU to %s on address %s", PREFIX, p.Name(), startAddr)
 		mmu.peripheralIOMap[startAddr] = p
 	} else {
-		log.Printf("%s: Connecting MMU to %s on address range %s to %s", PREFIX, p.Name(), startAddr, endAddr)
+//		log.Printf("%s: Connecting MMU to %s on address range %s to %s", PREFIX, p.Name(), startAddr, endAddr)
 		for addr := startAddr; addr <= endAddr; addr++ {
 			mmu.peripheralIOMap[addr] = p
 		}
@@ -217,7 +217,7 @@ func (mmu *GbcMMU) ConnectPeripheral(p components.Peripheral, startAddr, endAddr
 
 //Helper method for connecting peripherals that don't look at contiguous chunks of memory
 func (mmu *GbcMMU) ConnectPeripheralOn(p components.Peripheral, addrs ...types.Word) {
-	log.Printf("%s: Connecting MMU to %s to address(es): %s", PREFIX, p.Name(), addrs)
+//	log.Printf("%s: Connecting MMU to %s to address(es): %s", PREFIX, p.Name(), addrs)
 	for _, addr := range addrs {
 		mmu.peripheralIOMap[addr] = p
 	}
@@ -231,21 +231,21 @@ func (mmu *GbcMMU) PrintPeripheralMap() {
 
 	sort.Sort(addrs)
 
-	for i, addr := range addrs {
+	/*for i, addr := range addrs {
 		peripheral := mmu.peripheralIOMap[addr]
 
-		fmt.Printf("[%s] -> %s   ", addr, peripheral.Name())
+//		fmt.Printf("[%s] -> %s   ", addr, peripheral.Name())
 		if i%8 == 0 {
-			fmt.Println()
+//			fmt.Println()
 		}
-	}
+	}*/
 
-	fmt.Println()
+//	fmt.Println()
 }
 
 //Puts BIOS ROM into special area in MMU
 func (mmu *GbcMMU) LoadBIOS(data []byte) error {
-	log.Println(PREFIX+": Loading", len(data), "byte BIOS ROM into MMU")
+//	log.Println(PREFIX+": Loading", len(data), "byte BIOS ROM into MMU")
 	if len(data) > len(mmu.bios) {
 		return ROMIsBiggerThanRegion
 	}
@@ -256,7 +256,7 @@ func (mmu *GbcMMU) LoadBIOS(data []byte) error {
 
 func (mmu *GbcMMU) LoadCartridge(cart *cartridge.Cartridge) {
 	mmu.cartridge = cart
-	log.Printf("%s: Loaded cartridge into MMU: -\n%s\n", PREFIX, cart)
+//	log.Printf("%s: Loaded cartridge into MMU: -\n%s\n", PREFIX, cart)
 }
 
 func (mmu *GbcMMU) IsCartridgeColor() bool {
@@ -266,14 +266,14 @@ func (mmu *GbcMMU) IsCartridgeColor() bool {
 func (mmu *GbcMMU) SaveCartridgeRam(savesDir string) {
 	err := mmu.cartridge.SaveRam(savesDir)
 	if err != nil {
-		log.Println("Error occured attempting to save RAM to disk: ", err)
+//		log.Println("Error occured attempting to save RAM to disk: ", err)
 	}
 }
 
 func (mmu *GbcMMU) LoadCartridgeRam(savesDir string) {
 	err := mmu.cartridge.LoadRam(savesDir)
 	if err != nil {
-		log.Println("Error occured attempting to load RAM from disk: ", err)
+//		log.Println("Error occured attempting to load RAM from disk: ", err)
 	}
 }
 
@@ -284,16 +284,16 @@ func (mmu *GbcMMU) WriteByteToRegister(addr types.Word, value byte) {
 		mmu.dmgStatusRegister = value
 	case CGB_DOUBLE_SPEED_PREP_REG:
 		if mmu.RunningColorGBHardware == false {
-			log.Printf("%s: WARNING -> Cannot write to %s in non-CGB mode! ROM may have unexpected behaviour (ROM is probably unsupported in non-CGB mode)", PREFIX, CGB_WRAM_BANK_SELECT)
+//			log.Printf("%s: WARNING -> Cannot write to %s in non-CGB mode! ROM may have unexpected behaviour (ROM is probably unsupported in non-CGB mode)", PREFIX, CGB_WRAM_BANK_SELECT)
 		} else {
 			mmu.cgbDoubleSpeedPreparationRegister = value
 		}
 	case CGB_INFRARED_PORT_REG:
-		log.Printf("%s: Attempting to write 0x%X to infrared port register (%s), this is currently unsupported", PREFIX, value, addr)
+//		log.Printf("%s: Attempting to write 0x%X to infrared port register (%s), this is currently unsupported", PREFIX, value, addr)
 	//Color GB Working RAM Bank Selection
 	case CGB_WRAM_BANK_SELECT:
 		if mmu.RunningColorGBHardware == false {
-			log.Printf("%s: WARNING -> Cannot write to %s in non-CGB mode! ROM may have unexpected behaviour (ROM is probably unsupported in non-CGB mode)", PREFIX, CGB_WRAM_BANK_SELECT)
+//			log.Printf("%s: WARNING -> Cannot write to %s in non-CGB mode! ROM may have unexpected behaviour (ROM is probably unsupported in non-CGB mode)", PREFIX, CGB_WRAM_BANK_SELECT)
 		} else {
 			mmu.cgbWramBankSelectedRegister = value
 		}
@@ -307,14 +307,14 @@ func (mmu *GbcMMU) WriteByteToRegister(addr types.Word, value byte) {
 		mmu.hdmaTransferInfo.Destination = (mmu.hdmaTransferInfo.Destination & 0xFF00) | types.Word(value)
 	case CGB_HDMA_REG:
 		if mmu.RunningColorGBHardware == false {
-			log.Printf("%s: WARNING -> Cannot write to %s in non-CGB mode! ROM may have unexpected behaviour (ROM is probably unsupported in non-CGB mode)", PREFIX, CGB_WRAM_BANK_SELECT)
+//			log.Printf("%s: WARNING -> Cannot write to %s in non-CGB mode! ROM may have unexpected behaviour (ROM is probably unsupported in non-CGB mode)", PREFIX, CGB_WRAM_BANK_SELECT)
 		} else {
 			if value&0x80 == 0x00 {
 				mmu.hdmaTransferInfo.Length = int(value&0x7F) + 1
 				mmu.hdmaTransferInfo.Running = true
 				mmu.doInstantDMATransfer(mmu.hdmaTransferInfo.Source, mmu.hdmaTransferInfo.Destination, mmu.hdmaTransferInfo.Length, 16)
 			} else {
-				log.Println("HDMA horizontal HBlank is unsupported at the moment ")
+//				log.Println("HDMA horizontal HBlank is unsupported at the moment ")
 			}
 		}
 	default:
@@ -343,7 +343,7 @@ func (mmu *GbcMMU) ReadByteFromRegister(addr types.Word) byte {
 		}
 		return mmu.cgbWramBankSelectedRegister
 	default:
-		log.Printf("Reading register: %s", addr)
+//		log.Printf("Reading register: %s", addr)
 		return mmu.emptySpace[addr-0xFF4C]
 	}
 }
@@ -424,6 +424,6 @@ func (mmu *GbcMMU) RequestInterrupt(interrupt byte) {
 	case constants.JOYP_HILO_IRQ:
 		mmu.WriteByte(constants.INTERRUPT_FLAG_ADDR, oldVal|constants.JOYP_HILO_IRQ)
 	default:
-		log.Println(PREFIX, "WARNING - interrupt", interrupt, "is currently unimplemented")
+//		log.Println(PREFIX, "WARNING - interrupt", interrupt, "is currently unimplemented")
 	}
 }

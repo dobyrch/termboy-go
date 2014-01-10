@@ -7,8 +7,8 @@
 package apu
 
 import (
+	//"log"
 	"github.com/dobyrch/termboy-go/components"
-	"log"
 	"github.com/dobyrch/termboy-go/types"
 )
 
@@ -42,5 +42,5 @@ func (apu *APU) LinkIRQHandler(m components.IRQHandler) {
 }
 
 func (apu *APU) Reset() {
-	log.Println(apu.Name()+": Resetting", apu.Name())
+//	log.Println(apu.Name()+": Resetting", apu.Name())
 }

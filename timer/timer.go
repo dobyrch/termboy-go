@@ -4,7 +4,7 @@ import (
 	"github.com/dobyrch/termboy-go/components"
 	"github.com/dobyrch/termboy-go/constants"
 	"fmt"
-	"log"
+	//"log"
 	"github.com/dobyrch/termboy-go/types"
 )
 
@@ -144,7 +144,7 @@ func (timer *Timer) Write(address types.Word, value byte) {
 
 		if oldFrequency != newFrequency {
 			timer.timaCounter.SetFrequency(newFrequency)
-			log.Println(timer.timaCounter)
+//			log.Println(timer.timaCounter)
 		}
 
 		timer.tacRegister = value
@@ -170,9 +170,9 @@ func (timer *Timer) GetFrequency(freqId byte) Frequency {
 
 func (timer *Timer) LinkIRQHandler(m components.IRQHandler) {
 	timer.irqHandler = m
-	log.Println(timer.Name() + ": Linked IRQ Handler to Timer")
+//	log.Println(timer.Name() + ": Linked IRQ Handler to Timer")
 }
 
 func (timer *Timer) Reset() {
-	log.Println("Resetting", timer.Name())
+//	log.Println("Resetting", timer.Name())
 }

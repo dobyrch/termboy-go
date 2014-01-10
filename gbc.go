@@ -9,13 +9,15 @@ import (
 	"fmt"
 	"github.com/dobyrch/termboy-go/gpu"
 	"github.com/dobyrch/termboy-go/inputoutput"
+	//TODO: create logging scheme that doesn't write over screen
+	//TODO: ensure that all fatal logs run Poweroff!
 	"log"
 	"github.com/dobyrch/termboy-go/mmu"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"runtime"
-	"strings"
+	//"strings"
 	"syscall"
 	"time"
 	"github.com/dobyrch/termboy-go/timer"
@@ -80,7 +82,7 @@ func (gbc *GomeboyColor) DoFrame() {
 		}*/
 
 		if gbc.config.DumpState && !gbc.cpu.Halted {
-			fmt.Println(gbc.cpu)
+//			fmt.Println(gbc.cpu)
 		}
 		gbc.Step()
 	}
@@ -105,7 +107,7 @@ func (gbc *GomeboyColor) Step() {
 
 			//put the GPU in color mode if cartridge is ColorGB and user has specified color GB mode
 			gbc.SetHardwareMode(gbc.config.ColorMode)
-			log.Println("Finished GB boot program, launching game...")
+//			log.Println("Finished GB boot program, launching game...")
 		}
 	}
 }
@@ -119,7 +121,7 @@ func (gbc *GomeboyColor) Run() {
 		if gbc.config.DisplayFPS {
 			if time.Since(currentTime) >= (1 * time.Second) {
 				gbc.StoreFPSSample(gbc.frameCount / 1.0)
-				log.Println("Average frames per second:", gbc.averageFramesPerSecond)
+//				log.Println("Average frames per second:", gbc.averageFramesPerSecond)
 				currentTime = time.Now()
 				gbc.frameCount = 0
 			}
@@ -141,8 +143,8 @@ func (gbc *GomeboyColor) StoreFPSSample(sample int) {
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	fmt.Printf("%s. %s\n", TITLE, VERSION)
-	fmt.Println(strings.Repeat("*", 120))
+//	fmt.Printf("%s. %s\n", TITLE, VERSION)
+//	fmt.Println(strings.Repeat("*", 120))
 
 	flag.Usage = PrintHelp
 
@@ -172,7 +174,7 @@ func main() {
 	//command line flags take precedence
 	conf.OverrideConfigWithAnySetFlags()
 
-	fmt.Println(conf)
+//	fmt.Println(conf)
 	romFilename := flag.Arg(0)
 
 	cart, err := cartridge.NewCartridge(romFilename);
@@ -192,7 +194,7 @@ func main() {
 	//gbc.debugOptions.Init(gbc.config.DumpState)
 
 	/*if gbc.config.Debug {
-		log.Println("Emulator will start in debug mode")
+//		log.Println("Emulator will start in debug mode")
 		gbc.debugOptions.debuggerOn = true
 
 		//set breakpoint if defined
@@ -200,7 +202,7 @@ func main() {
 			log.Fatalln("Cannot parse breakpoint:", gbc.config.BreakOn, "\n\t", err)
 		} else {
 			gbc.debugOptions.breakWhen = types.Word(b)
-			log.Println("Emulator will break into debugger when PC = ", gbc.debugOptions.breakWhen)
+//			log.Println("Emulator will break into debugger when PC = ", gbc.debugOptions.breakWhen)
 		}
 	}*/
 
@@ -216,10 +218,10 @@ func main() {
 	gbc.gpu.LinkScreen(gbc.io.ScreenOutputChannel)
 	gbc.setupBoot()
 
-	log.Println("Completed setup")
-	log.Println(strings.Repeat("*", 120))
+//	log.Println("Completed setup")
+//	log.Println(strings.Repeat("*", 120))
 
-	log.Println("Starting emulator")
+//	log.Println("Starting emulator")
 
 	//TODO: Move signal handling to a more appropriate place (inputoutput)
 	sigc := make(chan os.Signal, 1)
@@ -247,10 +249,10 @@ func main() {
 
 func (gbc *GomeboyColor) setupBoot() {
 	if gbc.config.SkipBoot {
-		log.Println("Boot sequence disabled")
+//		log.Println("Boot sequence disabled")
 		gbc.setupWithoutBoot()
 	} else {
-		log.Println("Boot sequence enabled")
+//		log.Println("Boot sequence enabled")
 		gbc.setupWithBoot()
 	}
 }
@@ -324,20 +326,20 @@ func (gbc *GomeboyColor) Poweroff() {
 	gbc.mmu.SaveCartridgeRam(gbc.config.SavesDir)
 	gbc.io.Display.CleanUp()
 	gbc.io.KeyHandler.RestoreKeyboard()
-	log.Println("Goodbye!")
+//	log.Println("Goodbye!")
 	os.Exit(0)
 }
 
 /*func (gbc *GomeboyColor) Pause() {
-	log.Println("DEBUGGER: Breaking because PC ==", gbc.debugOptions.breakWhen)
+//	log.Println("DEBUGGER: Breaking because PC ==", gbc.debugOptions.breakWhen)
 	b := bufio.NewWriter(os.Stdout)
 	r := bufio.NewReader(os.Stdin)
 
-	fmt.Fprintln(b, "Debug mode, type ? for help")
+//	fmt.Fprintln(b, "Debug mode, type ? for help")
 	for gbc.debugOptions.debuggerOn {
 		var instruction string
 		b.Flush()
-		fmt.Fprint(b, "> ")
+//		fmt.Fprint(b, "> ")
 		b.Flush()
 		instruction, _ = r.ReadString('\n')
 		b.Flush()
@@ -354,14 +356,14 @@ func (gbc *GomeboyColor) Poweroff() {
 		if v, ok := gbc.debugOptions.debugFuncMap[command]; ok {
 			v(gbc, instructions[1:]...)
 		} else {
-			fmt.Fprintln(b, "Unknown command:", command)
-			fmt.Fprintln(b, "Debug mode, type ? for help")
+//			fmt.Fprintln(b, "Unknown command:", command)
+//			fmt.Fprintln(b, "Debug mode, type ? for help")
 		}
 	}
 }*/
 
 func (gbc *GomeboyColor) Reset() {
-	log.Println("Resetting system")
+//	log.Println("Resetting system")
 	gbc.cpu.Reset()
 	gbc.gpu.Reset()
 	gbc.mmu.Reset()

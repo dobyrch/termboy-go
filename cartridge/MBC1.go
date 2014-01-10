@@ -3,7 +3,7 @@ package cartridge
 import (
 	"github.com/dobyrch/termboy-go/constants"
 	"fmt"
-	"log"
+	//"log"
 	"strings"
 	"github.com/dobyrch/termboy-go/types"
 	"github.com/dobyrch/termboy-go/utils"
@@ -69,10 +69,10 @@ func (m *MBC1) Write(addr types.Word, value byte) {
 		//when in 4/32 mode...
 		if m.MaxMemMode == constants.FOURMB_ROM_32KBRAM && m.hasRAM {
 			if r := value & 0x0F; r == 0x0A {
-				log.Println(m.Name + ": Enabling RAM")
+//				log.Println(m.Name + ": Enabling RAM")
 				m.ramEnabled = true
 			} else {
-				log.Println(m.Name + ": Disabling RAM")
+//				log.Println(m.Name + ": Disabling RAM")
 				m.ramEnabled = false
 			}
 		}
@@ -83,10 +83,10 @@ func (m *MBC1) Write(addr types.Word, value byte) {
 	case addr >= 0x6000 && addr <= 0x7FFF:
 		if mode := value & 0x01; mode == 0x00 {
 			m.MaxMemMode = constants.SIXTEENMB_ROM_8KBRAM
-			log.Println(m.Name + ": Switched MBC1 mode to 16/8")
+//			log.Println(m.Name + ": Switched MBC1 mode to 16/8")
 		} else {
 			m.MaxMemMode = constants.FOURMB_ROM_32KBRAM
-			log.Println(m.Name + ": Switched MBC1 mode to 4/32")
+//			log.Println(m.Name + ": Switched MBC1 mode to 4/32")
 		}
 	case addr >= 0xA000 && addr <= 0xBFFF:
 		if m.hasRAM && m.ramEnabled {

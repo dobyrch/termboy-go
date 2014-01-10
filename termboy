@@ -1,0 +1,2 @@
+#!/usr/bin/sh
+setfont -h4 && termboy-go $1 ; setfont

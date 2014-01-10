@@ -3,8 +3,8 @@ package gpu
 import (
 	"github.com/dobyrch/termboy-go/components"
 	"github.com/dobyrch/termboy-go/constants"
-	"fmt"
-	"log"
+	//"fmt"
+	//"log"
 	"github.com/dobyrch/termboy-go/types"
 )
 
@@ -115,12 +115,12 @@ func NewGPU() *GPU {
 
 func (g *GPU) LinkScreen(screenChannel chan *types.Screen) {
 	g.screenOutputChannel = screenChannel
-	log.Println(PREFIX, "Linked screen to GPU")
+//	log.Println(PREFIX, "Linked screen to GPU")
 }
 
 func (g *GPU) LinkIRQHandler(m components.IRQHandler) {
 	g.irqHandler = m
-	log.Println(PREFIX, "Linked IRQ Handler to GPU")
+//	log.Println(PREFIX, "Linked IRQ Handler to GPU")
 }
 
 func (g *GPU) Name() string {
@@ -128,7 +128,7 @@ func (g *GPU) Name() string {
 }
 
 func (g *GPU) Reset() {
-	log.Println(PREFIX, "Resetting", g.Name())
+//	log.Println(PREFIX, "Resetting", g.Name())
 	g.Write(LCDC, 0x00)
 	g.screenData = *new(types.Screen)
 	g.rawScreenDotData = *new([144][160]int)
@@ -346,7 +346,7 @@ func (g *GPU) Write(addr types.Word, value byte) {
 		case CGB_VRAM_BANK_SELECT:
 			g.cgbVramBankSelectionRegister = value
 		default:
-			log.Printf(PREFIX+" WARNING: cannot write to register address %s as it is unknown", addr)
+//			log.Printf(PREFIX+" WARNING: cannot write to register address %s as it is unknown", addr)
 		}
 	}
 }
@@ -407,7 +407,7 @@ func (g *GPU) Read(addr types.Word) byte {
 		case CGB_VRAM_BANK_SELECT:
 			return g.cgbVramBankSelectionRegister
 		default:
-			log.Printf(PREFIX+" WARNING: register address %s unknown", addr)
+//			log.Printf(PREFIX+" WARNING: register address %s unknown", addr)
 		}
 	}
 
@@ -718,7 +718,7 @@ func (g *GPU) byteToPalette(b byte) Palette {
 
 //debug helpers
 func (g *GPU) DumpTiles() [512][8][8]types.RGB {
-	fmt.Println("Dumping", len(g.tiledata[0]), "tiles")
+//	fmt.Println("Dumping", len(g.tiledata[0]), "tiles")
 	var out [512][8][8]types.RGB
 	for i, tile := range g.tiledata[0] {
 		for y := 0; y < 8; y++ {
@@ -733,7 +733,7 @@ func (g *GPU) DumpTiles() [512][8][8]types.RGB {
 }
 
 func (g *GPU) Dump8x8Sprites() [40][8][8]types.RGB {
-	fmt.Println("Dumping", len(g.sprites8x8), "sprites")
+//	fmt.Println("Dumping", len(g.sprites8x8), "sprites")
 	var out [40][8][8]types.RGB
 	for i, spr := range g.sprites8x8 {
 		for y := 0; y < 8; y++ {
@@ -749,11 +749,11 @@ func (g *GPU) Dump8x8Sprites() [40][8][8]types.RGB {
 }
 
 func (g *GPU) DumpTilemap(tileMapAddr types.Word, tileDataSigned bool) [256][256]types.RGB {
-	fmt.Print("Dumping Tilemap ", tileMapAddr)
+//	fmt.Print("Dumping Tilemap ", tileMapAddr)
 	if tileDataSigned {
-		fmt.Println(" (signed)")
+//		fmt.Println(" (signed)")
 	} else {
-		fmt.Println(" (unsigned)")
+//		fmt.Println(" (unsigned)")
 	}
 
 	var result [256][256]types.RGB

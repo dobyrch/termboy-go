@@ -35,15 +35,15 @@ func (s *Display) init(title string, screenSizeMultiplier int) error {
 }
 
 func (s *Display) drawFrame(screenData *types.Screen) {
-        for y := 0; y < SCREEN_HEIGHT; y += 2 {
-                for x := 0; x < SCREEN_WIDTH; x++ {
+        for y := 0; y < SCREEN_HEIGHT; y ++ {
+                for x := 0; x < SCREEN_WIDTH; x += 2 {
                         c1 := screenData[y][x]
-                        c2 := screenData[y+1][x]
+                        c2 := screenData[y][x+1]
 
                         if (s.lastFrame[y][x] != c1 ||
-                            s.lastFrame[y+1][x] != c2) {
+                            s.lastFrame[y][x+1] != c2) {
                                 s.lastFrame[y][x] = c1
-                                s.lastFrame[y+1][x] = c2
+                                s.lastFrame[y][x+1] = c2
 
                                 var fg, bg int
                                 //TODO: in ansii class, set color/bold attr and append codes as needed
@@ -70,8 +70,9 @@ func (s *Display) drawFrame(screenData *types.Screen) {
                                         bg = 47
                                 }
 
-                                fmt.Printf("%c[%d;%dH", ESC, y/2 + 1, x + 1)
-                                fmt.Printf("%c[%d;%dm%c", ESC, fg, bg, '▀')
+                                fmt.Printf("%c[%d;%dH", ESC, y + 1, x/2 + 1)
+                                //fmt.Printf("%c[%d;%dm%c", ESC, fg, bg, '▀')
+                                fmt.Printf("%c[%d;%dm%c", ESC, fg, bg, '▌')
                         }
                 }
         }

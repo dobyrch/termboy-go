@@ -33,7 +33,7 @@ func (m *MBC0) String() string {
 }
 
 func (m *MBC0) Write(addr types.Word, value byte) {
-	log.Printf("%s: Attempted to write 0x%X to address %s - this does nothing!", m.Name, value, addr)
+//	log.Printf("%s: Attempted to write 0x%X to address %s - this does nothing!", m.Name, value, addr)
 }
 
 func (m *MBC0) Read(addr types.Word) byte {

@@ -3,7 +3,7 @@ package inputoutput
 import (
 	// #include "keyboard.h"
 	"C"
-	"log"
+	//"log"
 	"github.com/dobyrch/termboy-go/components"
 	"github.com/dobyrch/termboy-go/constants"
 	"github.com/dobyrch/termboy-go/types"
@@ -55,14 +55,14 @@ func (k *KeyHandler) Name() string {
 }
 
 func (k *KeyHandler) Reset() {
-        log.Printf("%s: Resetting", k.Name())
+//        log.Printf("%s: Resetting", k.Name())
         k.rows[0], k.rows[1] = 0x0F, 0x0F
         k.colSelect = 0x00
 }
 
 func (k *KeyHandler) LinkIRQHandler(m components.IRQHandler) {
         k.irqHandler = m
-        log.Printf("%s: Linked IRQ Handler to Keyboard Handler", k.Name())
+//        log.Printf("%s: Linked IRQ Handler to Keyboard Handler", k.Name())
 }
 
 func (k *KeyHandler) Read(addr types.Word) byte {
