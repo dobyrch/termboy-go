@@ -127,7 +127,6 @@ func (gbc *GomeboyColor) Run() {
 	}
 }
 
-//TODO: look for unused exported funcs and make private
 func (gbc *GomeboyColor) StoreFPSSample(sample int) {
 	gbc.fpsSamples = append(gbc.fpsSamples, sample)
 	if len(gbc.fpsSamples) == 5 {
@@ -166,28 +165,26 @@ func main() {
 		log.Fatalf("Error configuring settings directory: %v", err)
 	}
 
-	conferr := conf.LoadConfig()
-	if conferr != nil {
-		log.Fatalf("Error encountered attempting to load configuration file: %v", conferr)
-	} else {
-		//command line flags take precedence
-		conf.OverrideConfigWithAnySetFlags()
+	if err := conf.LoadConfig(); err != nil {
+		log.Fatalf("Error encountered attempting to load configuration file: %v", err)
 	}
+
+	//command line flags take precedence
+	conf.OverrideConfigWithAnySetFlags()
 
 	fmt.Println(conf)
 	romFilename := flag.Arg(0)
-	cart, err := cartridge.NewCartridge(romFilename)
+
+	cart, err := cartridge.NewCartridge(romFilename);
 	if err != nil {
-		log.Println(err)
-		return
+		log.Fatal(err)
 	}
 
 	var gbc *GomeboyColor = NewGBC()
 	gbc.config = *conf
-	b, er := gbc.mmu.LoadBIOS(BOOTROM)
-	if !b {
-		log.Println("Error loading bootrom:", er)
-		return
+
+	if err := gbc.mmu.LoadBIOS(BOOTROM); err != nil {
+		log.Fatal(err)
 	}
 
 	gbc.mmu.LoadCartridge(cart)
@@ -209,12 +206,9 @@ func main() {
 
 	//append cartridge name and filename to title
 	gbc.config.Title += fmt.Sprintf(" - %s - %s", filepath.Base(cart.Filename), cart.Title)
-	gbc.config.OnCloseHandler = gbc.onClose
 
-	ioInitializeErr := gbc.io.Init(gbc.config.Title, gbc.config.ScreenSize, gbc.onClose)
-
-	if ioInitializeErr != nil {
-		log.Fatalf("%v", ioInitializeErr)
+	if err = gbc.io.Init(gbc.config.Title, gbc.config.ScreenSize); err != nil {
+		log.Fatal(err)
 	}
 
 	//load RAM into MBC (if supported)
@@ -227,7 +221,7 @@ func main() {
 
 	log.Println("Starting emulator")
 
-	inputoutput.InitKeyboard()
+	//TODO: Move signal handling to a more appropriate place (inputoutput)
 	sigc := make(chan os.Signal, 1)
 	signal.Notify(sigc,
 		syscall.SIGHUP,
@@ -236,18 +230,19 @@ func main() {
 		syscall.SIGQUIT)
 	go func() {
 		<-sigc
-		inputoutput.RestoreKeyboard()
-		log.Fatal("Thanks for playing!")
+		gbc.Poweroff()
 	}()
 
-	//Starts emulator code in a goroutine
+	//Start emulator code in a goroutine
 	go gbc.Run()
 
 	//lock the OS thread here
 	runtime.LockOSThread()
 
-	//set the IO controller to run indefinitely (it waits for screen updates)
+	//Run IO operations until user presses ESC
 	gbc.io.Run()
+
+	gbc.Poweroff()
 }
 
 func (gbc *GomeboyColor) setupBoot() {
@@ -325,8 +320,10 @@ func (gbc *GomeboyColor) setupWithoutBoot() {
 	gbc.mmu.WriteByte(0xFFFF, 0x00)
 }
 
-func (gbc *GomeboyColor) onClose() {
+func (gbc *GomeboyColor) Poweroff() {
 	gbc.mmu.SaveCartridgeRam(gbc.config.SavesDir)
+	gbc.io.Display.CleanUp()
+	gbc.io.KeyHandler.RestoreKeyboard()
 	log.Println("Goodbye!")
 	os.Exit(0)
 }
@@ -374,7 +371,7 @@ func (gbc *GomeboyColor) Reset() {
 	gbc.setupBoot()
 }
 
-var BOOTROM []byte = []byte{
+var BOOTROM []byte = []byte {
 	0x31, 0xFE, 0xFF, 0xAF, 0x21, 0xFF, 0x9F, 0x32, 0xCB, 0x7C, 0x20, 0xFB, 0x21, 0x26, 0xFF, 0x0E,
 	0x11, 0x3E, 0x80, 0x32, 0xE2, 0x0C, 0x3E, 0xF3, 0xE2, 0x32, 0x3E, 0x77, 0x77, 0x3E, 0xFC, 0xE0,
 	0x47, 0x11, 0xa8, 0x00, 0x21, 0x10, 0x80, 0x1A, 0xCD, 0x95, 0x00, 0xCD, 0x96, 0x00, 0x13, 0x7B,

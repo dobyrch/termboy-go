@@ -66,7 +66,6 @@ type Config struct {
 	Debug          bool
 	BreakOn        string
 	DumpState      bool
-	OnCloseHandler func()
 
 	//internal
 	SettingsDir string
