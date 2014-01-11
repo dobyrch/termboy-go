@@ -3,3 +3,7 @@ termboy-go
 *.pkg.tar.xz
 src/*
 pkg/*
+
+# vim swapfiles
+*.swp
+*.swo
