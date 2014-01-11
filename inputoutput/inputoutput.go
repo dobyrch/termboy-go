@@ -8,7 +8,6 @@ import (
 )
 
 const PREFIX string = "IO"
-const ESC byte = 0x1B
 const ROW_1 byte = 0x10
 const ROW_2 byte = 0x20
 const SCREEN_WIDTH int = 160
