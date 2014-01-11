@@ -6,4 +6,5 @@ if [ $TERM != 'linux' ]; then
 	exit 1
 fi
 
-setfont -h4 && termboy-go $1 ; setfont
+#TODO: save and restore font
+setfont -h4 default8x16 && termboy-go $1 ; setfont
