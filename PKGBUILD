@@ -10,9 +10,14 @@ makedepends=('go')
 source=("https://github.com/dobyrch/$pkgname-go/archive/v$pkgver.tar.gz")
 md5sums=('3a061d9f5f2e1be420f284a1ebb5d9a2')
 
-build() {
+prepare() {
+  # Since the source code uses remote import paths, the directory structure
+  # needs to be modified so 'go build' can find what it needs
   mkdir -p "src/github.com/dobyrch"
   mv "$pkgname-go-$pkgver" "src/github.com/dobyrch/$pkgname-go"
+}
+
+build() {
   cd "src/github.com/dobyrch/$pkgname-go"
   GOPATH="$srcdir" go build
 }
