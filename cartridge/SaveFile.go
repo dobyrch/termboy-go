@@ -10,9 +10,9 @@ import (
 	"hash/crc32"
 	"io"
 	"io/ioutil"
-	//"log"
 	"path/filepath"
 	"time"
+	"github.com/dobyrch/termboy-go/ansi"
 )
 
 type SaveFile struct {
@@ -74,7 +74,7 @@ func (s *SaveFile) InflateBank(bankStr string) ([]byte, error) {
 }
 
 func (s *SaveFile) Load(noOfBanks int) ([][]byte, error) {
-//	log.Println("Loading RAM from", s.Path)
+	ansi.Print("Loading RAM from", s.Path)
 	file, err := ioutil.ReadFile(s.Path)
 	if err != nil {
 		return nil, err
@@ -93,7 +93,7 @@ func (s *SaveFile) Load(noOfBanks int) ([][]byte, error) {
 	}
 
 	s = &saveFile
-//	log.Println("Game was last saved:", s.LastSaved)
+	ansi.Print("Game was last saved:", s.LastSaved)
 
 	if len(s.Banks) != noOfBanks {
 		return nil, errors.New(fmt.Sprintln("Error: Expected", noOfBanks, "banks but found", len(s.Banks)))
@@ -103,7 +103,7 @@ func (s *SaveFile) Load(noOfBanks int) ([][]byte, error) {
 
 	var result [][]byte = make([][]byte, s.NoOfBanks)
 	for i, bank := range s.Banks {
-//		log.Println("--> Loading bank", i)
+		ansi.Print("--> Loading bank", i)
 
 		//decompress into byte array
 		inflatedBank, err := s.InflateBank(bank)
@@ -132,7 +132,7 @@ func (s *SaveFile) Save(data [][]byte) error {
 	s.BankHashes = make([]uint32, s.NoOfBanks)
 	s.LastSaved = fmt.Sprint(time.Now().Format(time.UnixDate))
 
-//	log.Println("Saving RAM to", s.Path)
+	ansi.Print("Saving RAM to", s.Path)
 	for i, bank := range data {
 		//take crc32 hash of bank
 		s.BankHashes[i] = crc32.ChecksumIEEE(bank)
@@ -143,7 +143,7 @@ func (s *SaveFile) Save(data [][]byte) error {
 			return errors.New(fmt.Sprintln("Error attempting to compress bank %d (%v)", i, err))
 		}
 
-//		log.Printf("--> Storing bank %d (Compression ratio: %.1f%%)", i, 100.00-((float32(len(bankStr))/float32(len(bank)))*100))
+		ansi.Printf("--> Storing bank %d (Compression ratio: %.1f%%)", i, 100.00-((float32(len(bankStr))/float32(len(bank)))*100))
 		s.Banks[i] = bankStr
 	}
 
@@ -153,7 +153,7 @@ func (s *SaveFile) Save(data [][]byte) error {
 		return errors.New(fmt.Sprintln("Error attempting to parse into JSON", err))
 	}
 
-//	log.Println("Save file", s.Path, "size is", len(js), "bytes")
+	ansi.Print("Save file", s.Path, "size is", len(js), "bytes")
 
 	//write to disk
 	return ioutil.WriteFile(s.Path, js, 0755)

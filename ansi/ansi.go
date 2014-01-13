@@ -33,9 +33,20 @@ func PutRune(r rune, x, y int) {
 	}
 }
 
-func ClearScreen() {
-	fmt.Printf("%c[2J", ESC)
+func Print(a ...interface{}) {
 	fmt.Printf("%c[H", ESC)
+	fmt.Print(a)
+}
+
+func Printf(format string, a ...interface{}) {
+	s := fmt.Sprintf(format, a)
+	fmt.Printf("%c[H", ESC)
+	fmt.Print(s)
+}
+
+func ClearScreen() {
+	fmt.Printf("%c[H", ESC)
+	fmt.Printf("%c[2J", ESC)
 }
 
 func HideCursor() {
