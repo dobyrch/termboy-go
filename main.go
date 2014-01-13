@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/dobyrch/termboy-go/apu"
-	//"bufio"
 	"github.com/dobyrch/termboy-go/cartridge"
 	"github.com/dobyrch/termboy-go/cpu"
 	"flag"
@@ -17,12 +16,10 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
-	//"strings"
 	"syscall"
 	"time"
 	"github.com/dobyrch/termboy-go/timer"
 	"github.com/dobyrch/termboy-go/types"
-	//"github.com/dobyrch/termboy-go/utils"
 )
 
 const FRAME_CYCLES = 70224
@@ -30,10 +27,10 @@ const TITLE string = "termboy"
 
 var VERSION string
 
-type GomeboyColor struct {
+type GameBoy struct {
 	gpu                    *gpu.GPU
-	cpu                    *cpu.GbcCPU
-	mmu                    *mmu.GbcMMU
+	cpu                    *cpu.CPU
+	mmu                    *mmu.MMU
 	io                     *inputoutput.IO
 	apu                    *apu.APU
 	timer                  *timer.Timer
@@ -47,97 +44,97 @@ type GomeboyColor struct {
 	averageFramesPerSecond int
 }
 
-func NewGBC() *GomeboyColor {
-	gbc := new(GomeboyColor)
+func NewGameBoy() *GameBoy {
+	gb := new(GameBoy)
 
-	gbc.mmu = mmu.NewGbcMMU()
-	gbc.cpu = cpu.NewCPU()
-	gbc.cpu.LinkMMU(gbc.mmu)
+	gb.mmu = mmu.NewMMU()
+	gb.cpu = cpu.NewCPU()
+	gb.cpu.LinkMMU(gb.mmu)
 
-	gbc.io = inputoutput.NewIO()
-	gbc.gpu = gpu.NewGPU()
-	gbc.apu = apu.NewAPU()
-	gbc.timer = timer.NewTimer()
+	gb.io = inputoutput.NewIO()
+	gb.gpu = gpu.NewGPU()
+	gb.apu = apu.NewAPU()
+	gb.timer = timer.NewTimer()
 
 	//mmu will process interrupt requests from GPU (i.e. it will set appropriate flags)
-	gbc.gpu.LinkIRQHandler(gbc.mmu)
-	gbc.timer.LinkIRQHandler(gbc.mmu)
-	gbc.io.KeyHandler.LinkIRQHandler(gbc.mmu)
+	gb.gpu.LinkIRQHandler(gb.mmu)
+	gb.timer.LinkIRQHandler(gb.mmu)
+	gb.io.KeyHandler.LinkIRQHandler(gb.mmu)
 
-	gbc.mmu.ConnectPeripheral(gbc.apu, 0xFF10, 0xFF3F)
-	gbc.mmu.ConnectPeripheral(gbc.gpu, 0x8000, 0x9FFF)
-	gbc.mmu.ConnectPeripheral(gbc.gpu, 0xFE00, 0xFE9F)
-	gbc.mmu.ConnectPeripheral(gbc.gpu, 0xFF57, 0xFF6F)
-	gbc.mmu.ConnectPeripheralOn(gbc.gpu, 0xFF40, 0xFF41, 0xFF42, 0xFF43, 0xFF44, 0xFF45, 0xFF47, 0xFF48, 0xFF49, 0xFF4A, 0xFF4B, 0xFF4F)
-	gbc.mmu.ConnectPeripheralOn(gbc.io.KeyHandler, 0xFF00)
-	gbc.mmu.ConnectPeripheralOn(gbc.timer, 0xFF04, 0xFF05, 0xFF06, 0xFF07)
+	gb.mmu.ConnectPeripheral(gb.apu, 0xFF10, 0xFF3F)
+	gb.mmu.ConnectPeripheral(gb.gpu, 0x8000, 0x9FFF)
+	gb.mmu.ConnectPeripheral(gb.gpu, 0xFE00, 0xFE9F)
+	gb.mmu.ConnectPeripheral(gb.gpu, 0xFF57, 0xFF6F)
+	gb.mmu.ConnectPeripheralOn(gb.gpu, 0xFF40, 0xFF41, 0xFF42, 0xFF43, 0xFF44, 0xFF45, 0xFF47, 0xFF48, 0xFF49, 0xFF4A, 0xFF4B, 0xFF4F)
+	gb.mmu.ConnectPeripheralOn(gb.io.KeyHandler, 0xFF00)
+	gb.mmu.ConnectPeripheralOn(gb.timer, 0xFF04, 0xFF05, 0xFF06, 0xFF07)
 
-	return gbc
+	return gb
 }
 
-func (gbc *GomeboyColor) DoFrame() {
-	for gbc.cpuClockAcc < FRAME_CYCLES {
-		/*if gbc.debugOptions.debuggerOn && gbc.cpu.PC == gbc.debugOptions.breakWhen {
-			gbc.Pause()
+func (gb *GameBoy) DoFrame() {
+	for gb.cpuClockAcc < FRAME_CYCLES {
+		/*if gb.debugOptions.debuggerOn && gb.cpu.PC == gb.debugOptions.breakWhen {
+			gb.Pause()
 		}*/
 
-		if gbc.config.DumpState && !gbc.cpu.Halted {
-//			fmt.Println(gbc.cpu)
+		if gb.config.DumpState && !gb.cpu.Halted {
+//			fmt.Println(gb.cpu)
 		}
-		gbc.Step()
+		gb.Step()
 	}
 }
 
-func (gbc *GomeboyColor) Step() {
-	cycles := gbc.cpu.Step()
+func (gb *GameBoy) Step() {
+	cycles := gb.cpu.Step()
 	//GPU is unaffected by CPU speed changes
-	gbc.gpu.Step(cycles)
-	gbc.cpuClockAcc += cycles
+	gb.gpu.Step(cycles)
+	gb.cpuClockAcc += cycles
 
 	//these are affected by CPU speed changes
-	gbc.timer.Step(cycles / gbc.cpu.Speed)
+	gb.timer.Step(cycles / gb.cpu.Speed)
 
-	gbc.stepCount++
+	gb.stepCount++
 	//value in FF50 means gameboy has finished booting
-	if gbc.inBootMode {
-		if gbc.mmu.ReadByte(0xFF50) != 0x00 {
-			gbc.cpu.PC = 0x0100
-			gbc.mmu.SetInBootMode(false)
-			gbc.inBootMode = false
+	if gb.inBootMode {
+		if gb.mmu.ReadByte(0xFF50) != 0x00 {
+			gb.cpu.PC = 0x0100
+			gb.mmu.SetInBootMode(false)
+			gb.inBootMode = false
 
 			//put the GPU in color mode if cartridge is ColorGB and user has specified color GB mode
-			gbc.SetHardwareMode(gbc.config.ColorMode)
+			gb.SetHardwareMode(gb.config.ColorMode)
 //			log.Println("Finished GB boot program, launching game...")
 		}
 	}
 }
 
-func (gbc *GomeboyColor) Run() {
+func (gb *GameBoy) Run() {
 	currentTime := time.Now()
 	for {
-		gbc.DoFrame()
-		gbc.cpuClockAcc = 0
-		gbc.frameCount++
-		if gbc.config.DisplayFPS {
+		gb.DoFrame()
+		gb.cpuClockAcc = 0
+		gb.frameCount++
+		if gb.config.DisplayFPS {
 			if time.Since(currentTime) >= (1 * time.Second) {
-				gbc.StoreFPSSample(gbc.frameCount / 1.0)
-//				log.Println("Average frames per second:", gbc.averageFramesPerSecond)
+				gb.StoreFPSSample(gb.frameCount / 1.0)
+//				log.Println("Average frames per second:", gb.averageFramesPerSecond)
 				currentTime = time.Now()
-				gbc.frameCount = 0
+				gb.frameCount = 0
 			}
 		}
 	}
 }
 
-func (gbc *GomeboyColor) StoreFPSSample(sample int) {
-	gbc.fpsSamples = append(gbc.fpsSamples, sample)
-	if len(gbc.fpsSamples) == 5 {
+func (gb *GameBoy) StoreFPSSample(sample int) {
+	gb.fpsSamples = append(gb.fpsSamples, sample)
+	if len(gb.fpsSamples) == 5 {
 		average := 0
-		for _, i := range gbc.fpsSamples {
+		for _, i := range gb.fpsSamples {
 			average += i
 		}
-		gbc.averageFramesPerSecond = average / 5
-		gbc.fpsSamples = gbc.fpsSamples[1:]
+		gb.averageFramesPerSecond = average / 5
+		gb.fpsSamples = gb.fpsSamples[1:]
 	}
 }
 
@@ -182,41 +179,39 @@ func main() {
 		log.Fatal(err)
 	}
 
-	var gbc *GomeboyColor = NewGBC()
-	gbc.config = *conf
+	var gb *GameBoy = NewGameBoy()
+	gb.config = *conf
 
-	if err := gbc.mmu.LoadBIOS(BOOTROM); err != nil {
+	if err := gb.mmu.LoadBIOS(BOOTROM); err != nil {
 		log.Fatal(err)
 	}
 
-	gbc.mmu.LoadCartridge(cart)
-	//gbc.debugOptions = new(DebugOptions)
-	//gbc.debugOptions.Init(gbc.config.DumpState)
+	gb.mmu.LoadCartridge(cart)
+	//gb.debugOptions = new(DebugOptions)
+	//gb.debugOptions.Init(gb.config.DumpState)
 
-	/*if gbc.config.Debug {
+	/*if gb.config.Debug {
 //		log.Println("Emulator will start in debug mode")
-		gbc.debugOptions.debuggerOn = true
+		gb.debugOptions.debuggerOn = true
 
 		//set breakpoint if defined
-		if b, err := utils.StringToWord(gbc.config.BreakOn); err != nil {
-			log.Fatalln("Cannot parse breakpoint:", gbc.config.BreakOn, "\n\t", err)
+		if b, err := utils.StringToWord(gb.config.BreakOn); err != nil {
+			log.Fatalln("Cannot parse breakpoint:", gb.config.BreakOn, "\n\t", err)
 		} else {
-			gbc.debugOptions.breakWhen = types.Word(b)
-//			log.Println("Emulator will break into debugger when PC = ", gbc.debugOptions.breakWhen)
+			gb.debugOptions.breakWhen = types.Word(b)
+//			log.Println("Emulator will break into debugger when PC = ", gb.debugOptions.breakWhen)
 		}
 	}*/
 
 	//append cartridge name and filename to title
-	gbc.config.Title += fmt.Sprintf(" - %s - %s", filepath.Base(cart.Filename), cart.Title)
+	gb.config.Title += fmt.Sprintf(" - %s - %s", filepath.Base(cart.Filename), cart.Title)
 
-	if err = gbc.io.Init(gbc.config.Title, gbc.config.ScreenSize); err != nil {
-		log.Fatal(err)
-	}
+	gb.io.Init()
 
 	//load RAM into MBC (if supported)
-	gbc.mmu.LoadCartridgeRam(gbc.config.SavesDir)
-	gbc.gpu.LinkScreen(gbc.io.ScreenOutputChannel)
-	gbc.setupBoot()
+	gb.mmu.LoadCartridgeRam(gb.config.SavesDir)
+	gb.gpu.LinkScreen(gb.io.ScreenOutputChannel)
+	gb.setupBoot()
 
 //	log.Println("Completed setup")
 //	log.Println(strings.Repeat("*", 120))
@@ -232,111 +227,111 @@ func main() {
 		syscall.SIGQUIT)
 	go func() {
 		<-sigc
-		gbc.Poweroff()
+		gb.Poweroff()
 	}()
 
 	//Start emulator code in a goroutine
-	go gbc.Run()
+	go gb.Run()
 
 	//lock the OS thread here
 	runtime.LockOSThread()
 
 	//Run IO operations until user presses ESC
-	gbc.io.Run()
+	gb.io.Run()
 
-	gbc.Poweroff()
+	gb.Poweroff()
 }
 
-func (gbc *GomeboyColor) setupBoot() {
-	if gbc.config.SkipBoot {
+func (gb *GameBoy) setupBoot() {
+	if gb.config.SkipBoot {
 //		log.Println("Boot sequence disabled")
-		gbc.setupWithoutBoot()
+		gb.setupWithoutBoot()
 	} else {
 //		log.Println("Boot sequence enabled")
-		gbc.setupWithBoot()
+		gb.setupWithBoot()
 	}
 }
 
-func (gbc *GomeboyColor) setupWithBoot() {
-	gbc.inBootMode = true
-	gbc.mmu.WriteByte(0xFF50, 0x00)
+func (gb *GameBoy) setupWithBoot() {
+	gb.inBootMode = true
+	gb.mmu.WriteByte(0xFF50, 0x00)
 }
 
 //Determine if ColorGB hardware should be enabled
-func (gbc *GomeboyColor) SetHardwareMode(isColor bool) {
+func (gb *GameBoy) SetHardwareMode(isColor bool) {
 	if isColor {
-		gbc.cpu.R.A = 0x11
-		gbc.gpu.RunningColorGBHardware = gbc.mmu.IsCartridgeColor()
-		gbc.mmu.RunningColorGBHardware = true
+		gb.cpu.R.A = 0x11
+		gb.gpu.RunningColorGBHardware = gb.mmu.IsCartridgeColor()
+		gb.mmu.RunningColorGBHardware = true
 	} else {
-		gbc.cpu.R.A = 0x01
-		gbc.gpu.RunningColorGBHardware = false
-		gbc.mmu.RunningColorGBHardware = false
+		gb.cpu.R.A = 0x01
+		gb.gpu.RunningColorGBHardware = false
+		gb.mmu.RunningColorGBHardware = false
 	}
 }
 
-func (gbc *GomeboyColor) setupWithoutBoot() {
-	gbc.inBootMode = false
-	gbc.mmu.SetInBootMode(false)
-	gbc.cpu.PC = 0x100
-	gbc.SetHardwareMode(gbc.config.ColorMode)
-	gbc.cpu.R.F = 0xB0
-	gbc.cpu.R.B = 0x00
-	gbc.cpu.R.C = 0x13
-	gbc.cpu.R.D = 0x00
-	gbc.cpu.R.E = 0xD8
-	gbc.cpu.R.H = 0x01
-	gbc.cpu.R.L = 0x4D
-	gbc.cpu.SP = 0xFFFE
-	gbc.mmu.WriteByte(0xFF05, 0x00)
-	gbc.mmu.WriteByte(0xFF06, 0x00)
-	gbc.mmu.WriteByte(0xFF07, 0x00)
-	gbc.mmu.WriteByte(0xFF10, 0x80)
-	gbc.mmu.WriteByte(0xFF11, 0xBF)
-	gbc.mmu.WriteByte(0xFF12, 0xF3)
-	gbc.mmu.WriteByte(0xFF14, 0xBF)
-	gbc.mmu.WriteByte(0xFF16, 0x3F)
-	gbc.mmu.WriteByte(0xFF17, 0x00)
-	gbc.mmu.WriteByte(0xFF19, 0xBF)
-	gbc.mmu.WriteByte(0xFF1A, 0x7F)
-	gbc.mmu.WriteByte(0xFF1B, 0xFF)
-	gbc.mmu.WriteByte(0xFF1C, 0x9F)
-	gbc.mmu.WriteByte(0xFF1E, 0xBF)
-	gbc.mmu.WriteByte(0xFF20, 0xFF)
-	gbc.mmu.WriteByte(0xFF21, 0x00)
-	gbc.mmu.WriteByte(0xFF22, 0x00)
-	gbc.mmu.WriteByte(0xFF23, 0xBF)
-	gbc.mmu.WriteByte(0xFF24, 0x77)
-	gbc.mmu.WriteByte(0xFF25, 0xF3)
-	gbc.mmu.WriteByte(0xFF26, 0xF1)
-	gbc.mmu.WriteByte(0xFF40, 0x91)
-	gbc.mmu.WriteByte(0xFF42, 0x00)
-	gbc.mmu.WriteByte(0xFF43, 0x00)
-	gbc.mmu.WriteByte(0xFF45, 0x00)
-	gbc.mmu.WriteByte(0xFF47, 0xFC)
-	gbc.mmu.WriteByte(0xFF48, 0xFF)
-	gbc.mmu.WriteByte(0xFF49, 0xFF)
-	gbc.mmu.WriteByte(0xFF4A, 0x00)
-	gbc.mmu.WriteByte(0xFF4B, 0x00)
-	gbc.mmu.WriteByte(0xFF50, 0x00)
-	gbc.mmu.WriteByte(0xFFFF, 0x00)
+func (gb *GameBoy) setupWithoutBoot() {
+	gb.inBootMode = false
+	gb.mmu.SetInBootMode(false)
+	gb.cpu.PC = 0x100
+	gb.SetHardwareMode(gb.config.ColorMode)
+	gb.cpu.R.F = 0xB0
+	gb.cpu.R.B = 0x00
+	gb.cpu.R.C = 0x13
+	gb.cpu.R.D = 0x00
+	gb.cpu.R.E = 0xD8
+	gb.cpu.R.H = 0x01
+	gb.cpu.R.L = 0x4D
+	gb.cpu.SP = 0xFFFE
+	gb.mmu.WriteByte(0xFF05, 0x00)
+	gb.mmu.WriteByte(0xFF06, 0x00)
+	gb.mmu.WriteByte(0xFF07, 0x00)
+	gb.mmu.WriteByte(0xFF10, 0x80)
+	gb.mmu.WriteByte(0xFF11, 0xBF)
+	gb.mmu.WriteByte(0xFF12, 0xF3)
+	gb.mmu.WriteByte(0xFF14, 0xBF)
+	gb.mmu.WriteByte(0xFF16, 0x3F)
+	gb.mmu.WriteByte(0xFF17, 0x00)
+	gb.mmu.WriteByte(0xFF19, 0xBF)
+	gb.mmu.WriteByte(0xFF1A, 0x7F)
+	gb.mmu.WriteByte(0xFF1B, 0xFF)
+	gb.mmu.WriteByte(0xFF1C, 0x9F)
+	gb.mmu.WriteByte(0xFF1E, 0xBF)
+	gb.mmu.WriteByte(0xFF20, 0xFF)
+	gb.mmu.WriteByte(0xFF21, 0x00)
+	gb.mmu.WriteByte(0xFF22, 0x00)
+	gb.mmu.WriteByte(0xFF23, 0xBF)
+	gb.mmu.WriteByte(0xFF24, 0x77)
+	gb.mmu.WriteByte(0xFF25, 0xF3)
+	gb.mmu.WriteByte(0xFF26, 0xF1)
+	gb.mmu.WriteByte(0xFF40, 0x91)
+	gb.mmu.WriteByte(0xFF42, 0x00)
+	gb.mmu.WriteByte(0xFF43, 0x00)
+	gb.mmu.WriteByte(0xFF45, 0x00)
+	gb.mmu.WriteByte(0xFF47, 0xFC)
+	gb.mmu.WriteByte(0xFF48, 0xFF)
+	gb.mmu.WriteByte(0xFF49, 0xFF)
+	gb.mmu.WriteByte(0xFF4A, 0x00)
+	gb.mmu.WriteByte(0xFF4B, 0x00)
+	gb.mmu.WriteByte(0xFF50, 0x00)
+	gb.mmu.WriteByte(0xFFFF, 0x00)
 }
 
-func (gbc *GomeboyColor) Poweroff() {
-	gbc.mmu.SaveCartridgeRam(gbc.config.SavesDir)
-	gbc.io.Display.CleanUp()
-	gbc.io.KeyHandler.RestoreKeyboard()
+func (gb *GameBoy) Poweroff() {
+	gb.mmu.SaveCartridgeRam(gb.config.SavesDir)
+	gb.io.Display.CleanUp()
+	gb.io.KeyHandler.RestoreKeyboard()
 //	log.Println("Goodbye!")
 	os.Exit(0)
 }
 
-/*func (gbc *GomeboyColor) Pause() {
-//	log.Println("DEBUGGER: Breaking because PC ==", gbc.debugOptions.breakWhen)
+/*func (gb *GameBoy) Pause() {
+//	log.Println("DEBUGGER: Breaking because PC ==", gb.debugOptions.breakWhen)
 	b := bufio.NewWriter(os.Stdout)
 	r := bufio.NewReader(os.Stdin)
 
 //	fmt.Fprintln(b, "Debug mode, type ? for help")
-	for gbc.debugOptions.debuggerOn {
+	for gb.debugOptions.debuggerOn {
 		var instruction string
 		b.Flush()
 //		fmt.Fprint(b, "> ")
@@ -353,8 +348,8 @@ func (gbc *GomeboyColor) Poweroff() {
 		}
 
 		//dispatch
-		if v, ok := gbc.debugOptions.debugFuncMap[command]; ok {
-			v(gbc, instructions[1:]...)
+		if v, ok := gb.debugOptions.debugFuncMap[command]; ok {
+			v(gb, instructions[1:]...)
 		} else {
 //			fmt.Fprintln(b, "Unknown command:", command)
 //			fmt.Fprintln(b, "Debug mode, type ? for help")
@@ -362,15 +357,15 @@ func (gbc *GomeboyColor) Poweroff() {
 	}
 }*/
 
-func (gbc *GomeboyColor) Reset() {
+func (gb *GameBoy) Reset() {
 //	log.Println("Resetting system")
-	gbc.cpu.Reset()
-	gbc.gpu.Reset()
-	gbc.mmu.Reset()
-	gbc.apu.Reset()
-	gbc.io.KeyHandler.Reset()
-	gbc.io.ScreenOutputChannel <- &(types.Screen{})
-	gbc.setupBoot()
+	gb.cpu.Reset()
+	gb.gpu.Reset()
+	gb.mmu.Reset()
+	gb.apu.Reset()
+	gb.io.KeyHandler.Reset()
+	gb.io.ScreenOutputChannel <- &(types.Screen{})
+	gb.setupBoot()
 }
 
 var BOOTROM []byte = []byte {

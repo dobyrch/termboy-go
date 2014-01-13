@@ -34,7 +34,7 @@ type CPUFrame struct {
 	InterruptFlagBeforeHalt byte
 }
 
-func (cpu *GbcCPU) GetFrame() *CPUFrame {
+func (cpu *CPU) GetFrame() *CPUFrame {
 	var frame *CPUFrame = new(CPUFrame)
 	frame.PC = cpu.PC
 	frame.SP = cpu.SP
@@ -87,7 +87,7 @@ func (c *Clock) String() string {
 	return fmt.Sprintf("[M: %X, T: %X]", c.M, c.t)
 }
 
-type GbcCPU struct {
+type CPU struct {
 	PC                      types.Word // Program Counter
 	SP                      types.Word // Stack Pointer
 	R                       Registers
@@ -101,25 +101,25 @@ type GbcCPU struct {
 	Speed                   int
 }
 
-func NewCPU() *GbcCPU {
-	cpu := new(GbcCPU)
+func NewCPU() *CPU {
+	cpu := new(CPU)
 	cpu.Reset()
 	return cpu
 }
 
-func (cpu *GbcCPU) LinkMMU(m mmu.MemoryMappedUnit) {
+func (cpu *CPU) LinkMMU(m mmu.MemoryMappedUnit) {
 	cpu.mmu = m
 //	log.Println(PREFIX, "Linked CPU to MMU")
 }
 
-func (cpu *GbcCPU) Validate() error {
+func (cpu *CPU) Validate() error {
 	if cpu.mmu == nil {
 		return errors.New("No MMU linked to CPU")
 	}
 	return nil
 }
 
-func (cpu *GbcCPU) Reset() {
+func (cpu *CPU) Reset() {
 //	log.Println(PREFIX, "Resetting", NAME)
 	cpu.PC = 0
 	cpu.SP = 0
@@ -139,7 +139,7 @@ func (cpu *GbcCPU) Reset() {
 	cpu.Halted = false
 }
 
-func (cpu *GbcCPU) FlagsString() string {
+func (cpu *CPU) FlagsString() string {
 	var flags string = ""
 	var minus string = "-"
 
@@ -169,11 +169,11 @@ func (cpu *GbcCPU) FlagsString() string {
 	return flags
 }
 
-func (cpu *GbcCPU) String() string {
+func (cpu *CPU) String() string {
 	return fmt.Sprint("PC: ", cpu.PC, "  SP: ", cpu.SP, "  ", cpu.R, "  ", cpu.FlagsString(), "  ", cpu.CurrentInstruction)
 }
 
-func (cpu *GbcCPU) ResetFlag(flag int) {
+func (cpu *CPU) ResetFlag(flag int) {
 	switch flag {
 	case Z:
 		cpu.R.F = cpu.resetBit(7, cpu.R.F)
@@ -189,7 +189,7 @@ func (cpu *GbcCPU) ResetFlag(flag int) {
 	cpu.R.F &= 0xF0
 }
 
-func (cpu *GbcCPU) SetFlag(flag int) {
+func (cpu *CPU) SetFlag(flag int) {
 	switch flag {
 	case Z:
 		cpu.R.F = cpu.setBit(7, cpu.R.F)
@@ -205,7 +205,7 @@ func (cpu *GbcCPU) SetFlag(flag int) {
 	cpu.R.F &= 0xF0
 }
 
-func (cpu *GbcCPU) IsFlagSet(flag int) bool {
+func (cpu *CPU) IsFlagSet(flag int) bool {
 	switch flag {
 	case Z:
 		return cpu.R.F&0x80 == 0x80
@@ -221,11 +221,11 @@ func (cpu *GbcCPU) IsFlagSet(flag int) bool {
 	return false
 }
 
-func (cpu *GbcCPU) IncrementPC(by int) {
+func (cpu *CPU) IncrementPC(by int) {
 	cpu.PC += types.Word(by)
 }
 
-func (cpu *GbcCPU) DispatchCB(Opcode byte) {
+func (cpu *CPU) DispatchCB(Opcode byte) {
 	switch Opcode {
 	case 0x00: //RLC B
 		cpu.Rlc_r(&cpu.R.B)
@@ -745,7 +745,7 @@ func (cpu *GbcCPU) DispatchCB(Opcode byte) {
 	}
 }
 
-func (cpu *GbcCPU) Dispatch(Opcode byte) {
+func (cpu *CPU) Dispatch(Opcode byte) {
 	switch Opcode {
 	case 0x00: //NOP
 		cpu.NOP()
@@ -1240,7 +1240,7 @@ func (cpu *GbcCPU) Dispatch(Opcode byte) {
 	}
 }
 
-func (cpu *GbcCPU) Step() int {
+func (cpu *CPU) Step() int {
 	if err := cpu.Validate(); err != nil {
 		log.Fatalln(PREFIX, err)
 	}
@@ -1294,7 +1294,7 @@ func (cpu *GbcCPU) Step() int {
 	return cpu.LastInstrCycle.M
 }
 
-func (cpu *GbcCPU) CheckForInterrupts() bool {
+func (cpu *CPU) CheckForInterrupts() bool {
 	if cpu.InterruptsEnabled {
 		var ie byte = cpu.mmu.ReadByte(constants.INTERRUPT_ENABLED_FLAG_ADDR)
 		var iflag byte = cpu.mmu.ReadByte(constants.INTERRUPT_FLAG_ADDR)
@@ -1336,7 +1336,7 @@ func (cpu *GbcCPU) CheckForInterrupts() bool {
 }
 
 //Checks to see if the CPU speed should change to double (CGB only)
-func (cpu *GbcCPU) SetCPUSpeed() {
+func (cpu *CPU) SetCPUSpeed() {
 	var speedPrepRegister byte = cpu.mmu.ReadByte(mmu.CGB_DOUBLE_SPEED_PREP_REG)
 	if speedPrepRegister&0x01 == 0x01 {
 		switch cpu.Speed {
@@ -1353,7 +1353,7 @@ func (cpu *GbcCPU) SetCPUSpeed() {
 	}
 }
 
-func (cpu *GbcCPU) Compile(instruction Instruction) Instruction {
+func (cpu *CPU) Compile(instruction Instruction) Instruction {
 	switch instruction.OperandsSize {
 	case 1:
 		instruction.Operands[0] = cpu.mmu.ReadByte(cpu.PC + 1)
@@ -1365,48 +1365,48 @@ func (cpu *GbcCPU) Compile(instruction Instruction) Instruction {
 	return instruction
 }
 
-func (cpu *GbcCPU) Decode(instruction byte) (Instruction, bool) {
+func (cpu *CPU) Decode(instruction byte) (Instruction, bool) {
 	ins, ok := Instructions[instruction]
 	return ins, ok
 }
 
-func (cpu *GbcCPU) DecodeCB(instruction byte) (Instruction, bool) {
+func (cpu *CPU) DecodeCB(instruction byte) (Instruction, bool) {
 	ins, ok := InstructionsCB[instruction]
 	return ins, ok
 }
 
-func (cpu *GbcCPU) pushByteToStack(b byte) {
+func (cpu *CPU) pushByteToStack(b byte) {
 	cpu.SP--
 	cpu.WriteByte(cpu.SP, b)
 }
 
-func (cpu *GbcCPU) pushWordToStack(word types.Word) {
+func (cpu *CPU) pushWordToStack(word types.Word) {
 	hs, ls := utils.SplitIntoBytes(uint16(word))
 	cpu.pushByteToStack(hs)
 	cpu.pushByteToStack(ls)
 }
 
-func (cpu *GbcCPU) popByteFromStack() byte {
+func (cpu *CPU) popByteFromStack() byte {
 	var b byte = cpu.ReadByte(cpu.SP)
 	cpu.SP++
 	return b
 }
 
-func (cpu *GbcCPU) popWordFromStack() types.Word {
+func (cpu *CPU) popWordFromStack() types.Word {
 	ls := cpu.popByteFromStack()
 	hs := cpu.popByteFromStack()
 
 	return types.Word(utils.JoinBytes(hs, ls))
 }
 
-func (cpu *GbcCPU) ReadByte(addr types.Word) byte {
+func (cpu *CPU) ReadByte(addr types.Word) byte {
 	if err := cpu.Validate(); err != nil {
 		log.Fatalln(PREFIX, err)
 	}
 	return cpu.mmu.ReadByte(addr)
 }
 
-func (cpu *GbcCPU) WriteByte(addr types.Word, value byte) {
+func (cpu *CPU) WriteByte(addr types.Word, value byte) {
 	if err := cpu.Validate(); err != nil {
 		log.Fatalln(PREFIX, err)
 	}
@@ -1418,7 +1418,7 @@ func (cpu *GbcCPU) WriteByte(addr types.Word, value byte) {
 
 //General add function
 //side effect is flags are set on the cpu accordingly
-func (cpu *GbcCPU) addBytes(a, b byte) byte {
+func (cpu *CPU) addBytes(a, b byte) byte {
 	var calculation byte = a + b
 
 	cpu.ResetFlag(N)
@@ -1446,7 +1446,7 @@ func (cpu *GbcCPU) addBytes(a, b byte) byte {
 
 //General add words function
 //side effect is flags are set on the cpu accordingly
-func (cpu *GbcCPU) addWords(a, b types.Word) types.Word {
+func (cpu *CPU) addWords(a, b types.Word) types.Word {
 	var calculation types.Word = a + b
 
 	if calculation < a {
@@ -1468,7 +1468,7 @@ func (cpu *GbcCPU) addWords(a, b types.Word) types.Word {
 
 //General subtraction function
 //side effect is flags are set on the cpu accordingly
-func (cpu *GbcCPU) subBytes(a, b byte) byte {
+func (cpu *CPU) subBytes(a, b byte) byte {
 
 	cpu.SetFlag(N)
 
@@ -1496,7 +1496,7 @@ func (cpu *GbcCPU) subBytes(a, b byte) byte {
 
 //General and function
 //side effect is flags are set on the cpu accordingly
-func (cpu *GbcCPU) andBytes(a, b byte) byte {
+func (cpu *CPU) andBytes(a, b byte) byte {
 	var calculation byte = a & b
 
 	cpu.SetFlag(H)
@@ -1514,7 +1514,7 @@ func (cpu *GbcCPU) andBytes(a, b byte) byte {
 
 //General or function
 //side effect is flags are set on the cpu accordingly
-func (cpu *GbcCPU) orBytes(a, b byte) byte {
+func (cpu *CPU) orBytes(a, b byte) byte {
 	var calculation byte = a | b
 
 	cpu.ResetFlag(H)
@@ -1532,7 +1532,7 @@ func (cpu *GbcCPU) orBytes(a, b byte) byte {
 
 //General xor function
 //side effect is flags are set on the cpu accordingly
-func (cpu *GbcCPU) xorBytes(a, b byte) byte {
+func (cpu *CPU) xorBytes(a, b byte) byte {
 	var calculation byte = a ^ b
 
 	cpu.ResetFlag(H)
@@ -1550,7 +1550,7 @@ func (cpu *GbcCPU) xorBytes(a, b byte) byte {
 
 //General increment function
 //Side effect is CPU flags get set accordingly
-func (cpu *GbcCPU) incByte(value byte) byte {
+func (cpu *CPU) incByte(value byte) byte {
 	var calculation byte = value + 0x01
 
 	//N should be reset
@@ -1575,7 +1575,7 @@ func (cpu *GbcCPU) incByte(value byte) byte {
 
 //General decrement function
 //Side effect is CPU flags get set accordingly
-func (cpu *GbcCPU) decByte(a byte) byte {
+func (cpu *CPU) decByte(a byte) byte {
 	var calculation byte = a - 1
 	cpu.SetFlag(N)
 
@@ -1597,7 +1597,7 @@ func (cpu *GbcCPU) decByte(a byte) byte {
 
 //General swap function
 //Side effect is CPU flags get set accordingly
-func (cpu *GbcCPU) swapByte(a byte) byte {
+func (cpu *CPU) swapByte(a byte) byte {
 	var calculation byte = utils.SwapNibbles(a)
 	cpu.ResetFlag(N)
 	cpu.ResetFlag(H)
@@ -1614,7 +1614,7 @@ func (cpu *GbcCPU) swapByte(a byte) byte {
 
 //General bit - test function
 //Side effect is CPU flags get set accordingly
-func (cpu *GbcCPU) bitTest(bit byte, a byte) {
+func (cpu *CPU) bitTest(bit byte, a byte) {
 	if (a >> bit & 1) == 0 {
 		cpu.SetFlag(Z)
 	} else {
@@ -1626,12 +1626,12 @@ func (cpu *GbcCPU) bitTest(bit byte, a byte) {
 }
 
 //General set bit function
-func (cpu *GbcCPU) setBit(bit byte, a byte) byte {
+func (cpu *CPU) setBit(bit byte, a byte) byte {
 	return a | (1 << uint(bit))
 }
 
 //General reset bit function
-func (cpu *GbcCPU) resetBit(bit byte, a byte) byte {
+func (cpu *CPU) resetBit(bit byte, a byte) byte {
 	return a & ^(1 << uint(bit))
 }
 
@@ -1640,20 +1640,20 @@ func (cpu *GbcCPU) resetBit(bit byte, a byte) byte {
 
 //NOP
 //No operation
-func (cpu *GbcCPU) NOP() {
+func (cpu *CPU) NOP() {
 
 }
 
 //HALT
 //Halt CPU
-func (cpu *GbcCPU) HALT() {
+func (cpu *CPU) HALT() {
 	//get and store the state of the IF FLAG now so we know when it changes
 	cpu.InterruptFlagBeforeHalt = cpu.mmu.ReadByte(constants.INTERRUPT_FLAG_ADDR)
 	cpu.Halted = true
 }
 
 //STOP
-func (cpu *GbcCPU) Stop() {
+func (cpu *CPU) Stop() {
 //	log.Println("CPU: Stopping...")
 	//After a stop instruction is executed, CGB hardware should check to see if the CPU speed should change
 	cpu.SetCPUSpeed()
@@ -1661,45 +1661,45 @@ func (cpu *GbcCPU) Stop() {
 
 //DI
 //Disable interrupts
-func (cpu *GbcCPU) DI() {
+func (cpu *CPU) DI() {
 	cpu.InterruptsEnabled = false
 }
 
 //EI
 //Enable interrupts
-func (cpu *GbcCPU) EI() {
+func (cpu *CPU) EI() {
 	cpu.InterruptsEnabled = true
 }
 
 //LD r,n
 //Load value (n) from memory address in the PC into register (r) and increment PC by 1
-func (cpu *GbcCPU) LDrn(r *byte) {
+func (cpu *CPU) LDrn(r *byte) {
 	*r = cpu.CurrentInstruction.Operands[0]
 }
 
 //LD r,r
 //Load value from register (r2) into register (r1)
-func (cpu *GbcCPU) LDrr(r1 *byte, r2 *byte) {
+func (cpu *CPU) LDrr(r1 *byte, r2 *byte) {
 	*r1 = *r2
 }
 
 //LD rr, r
 //Load value from register (r) into memory address located at register pair (RR)
-func (cpu *GbcCPU) LDrr_r(hs *byte, ls *byte, r *byte) {
+func (cpu *CPU) LDrr_r(hs *byte, ls *byte, r *byte) {
 	var RR types.Word = types.Word(utils.JoinBytes(*hs, *ls))
 	cpu.WriteByte(RR, *r)
 }
 
 //LD r, rr
 //Load value from memory address located in register pair (RR) into register (r)
-func (cpu *GbcCPU) LDr_rr(hs *byte, ls *byte, r *byte) {
+func (cpu *CPU) LDr_rr(hs *byte, ls *byte, r *byte) {
 	var RR types.Word = types.Word(utils.JoinBytes(*hs, *ls))
 	*r = cpu.ReadByte(RR)
 }
 
 //LD nn,r
 //Load value from register (r) and put it in memory address (nn) taken from the next 2 bytes of memory from the PC. Increment the PC by 2
-func (cpu *GbcCPU) LDnn_r(r *byte) {
+func (cpu *CPU) LDnn_r(r *byte) {
 	var ls byte = cpu.CurrentInstruction.Operands[0]
 	var hs byte = cpu.CurrentInstruction.Operands[1]
 	var resultAddr types.Word = types.Word(utils.JoinBytes(hs, ls))
@@ -1708,7 +1708,7 @@ func (cpu *GbcCPU) LDnn_r(r *byte) {
 
 //LD r, nn
 //Load the value in memory address defined from the next two bytes relative to the PC and store it in register (r). Increment the PC by 2
-func (cpu *GbcCPU) LDr_nn(r *byte) {
+func (cpu *CPU) LDr_nn(r *byte) {
 	var ls byte = cpu.CurrentInstruction.Operands[0]
 	var hs byte = cpu.CurrentInstruction.Operands[1]
 	var nn types.Word = types.Word(utils.JoinBytes(hs, ls))
@@ -1717,7 +1717,7 @@ func (cpu *GbcCPU) LDr_nn(r *byte) {
 
 //LD (HL),n
 //Load the value (n) from the memory address in the PC and put it in the memory address designated by register pair (HL)
-func (cpu *GbcCPU) LDhl_n() {
+func (cpu *CPU) LDhl_n() {
 	var HL types.Word = types.Word(utils.JoinBytes(cpu.R.H, cpu.R.L))
 	var value byte = cpu.CurrentInstruction.Operands[0]
 	cpu.WriteByte(HL, value)
@@ -1725,21 +1725,21 @@ func (cpu *GbcCPU) LDhl_n() {
 
 //LD r,(C)
 //Load the value from memory addressed 0xFF00 + value in register C. Store it in register (r)
-func (cpu *GbcCPU) LDr_ffplusc(r *byte) {
+func (cpu *CPU) LDr_ffplusc(r *byte) {
 	var valueAddr types.Word = 0xFF00 + types.Word(cpu.R.C)
 	*r = cpu.ReadByte(valueAddr)
 }
 
 //LD (C),r
 //Load the value from register (r) and store it in memory addressed 0xFF00 + value in register C.
-func (cpu *GbcCPU) LDffplusc_r(r *byte) {
+func (cpu *CPU) LDffplusc_r(r *byte) {
 	var valueAddr types.Word = 0xFF00 + types.Word(cpu.R.C)
 	cpu.WriteByte(valueAddr, *r)
 }
 
 //LDD r, (HL)
 //Load the value from memory addressed in register pair (HL) and store it in register R. Decrement the HL registers
-func (cpu *GbcCPU) LDDr_hl(r *byte) {
+func (cpu *CPU) LDDr_hl(r *byte) {
 	var HL types.Word = types.Word(utils.JoinBytes(cpu.R.H, cpu.R.L))
 	*r = cpu.ReadByte(HL)
 
@@ -1750,7 +1750,7 @@ func (cpu *GbcCPU) LDDr_hl(r *byte) {
 
 //LDD (HL), r
 //Load the value in register (r) and store in memory addressed in register pair (HL). Decrement the HL registers
-func (cpu *GbcCPU) LDDhl_r(r *byte) {
+func (cpu *CPU) LDDhl_r(r *byte) {
 	var HL types.Word = types.Word(utils.JoinBytes(cpu.R.H, cpu.R.L))
 	cpu.WriteByte(HL, *r)
 
@@ -1761,7 +1761,7 @@ func (cpu *GbcCPU) LDDhl_r(r *byte) {
 
 //LDI r, (HL)
 //Load the value from memory addressed in register pair (HL) and store it in register R. Increment the HL registers
-func (cpu *GbcCPU) LDIr_hl(r *byte) {
+func (cpu *CPU) LDIr_hl(r *byte) {
 	var HL types.Word = types.Word(utils.JoinBytes(cpu.R.H, cpu.R.L))
 	*r = cpu.ReadByte(HL)
 
@@ -1772,7 +1772,7 @@ func (cpu *GbcCPU) LDIr_hl(r *byte) {
 
 //LDI (HL), r
 //Load the value in register (r) and store in memory addressed in register pair (HL). Increment the HL registers
-func (cpu *GbcCPU) LDIhl_r(r *byte) {
+func (cpu *CPU) LDIhl_r(r *byte) {
 	var HL types.Word = types.Word(utils.JoinBytes(cpu.R.H, cpu.R.L))
 	cpu.WriteByte(HL, *r)
 
@@ -1782,20 +1782,20 @@ func (cpu *GbcCPU) LDIhl_r(r *byte) {
 }
 
 //LDH n, r
-func (cpu *GbcCPU) LDHn_r(r *byte) {
+func (cpu *CPU) LDHn_r(r *byte) {
 	var n byte = cpu.CurrentInstruction.Operands[0]
 	cpu.WriteByte(types.Word(0xFF00)+types.Word(n), *r)
 }
 
 //LDH r, n
 //Load value (n) in register (r) and store it in memory address FF00+PC. Increment PC by 1
-func (cpu *GbcCPU) LDHr_n(r *byte) {
+func (cpu *CPU) LDHr_n(r *byte) {
 	var n byte = cpu.CurrentInstruction.Operands[0]
 	*r = cpu.ReadByte((types.Word(0xFF00) + types.Word(n)))
 }
 
 //LD n, nn
-func (cpu *GbcCPU) LDn_nn(r1, r2 *byte) {
+func (cpu *CPU) LDn_nn(r1, r2 *byte) {
 	var ls byte = cpu.CurrentInstruction.Operands[0]
 	var hs byte = cpu.CurrentInstruction.Operands[1]
 
@@ -1805,7 +1805,7 @@ func (cpu *GbcCPU) LDn_nn(r1, r2 *byte) {
 }
 
 //LD SP, nn
-func (cpu *GbcCPU) LDSP_nn() {
+func (cpu *CPU) LDSP_nn() {
 	var ls byte = cpu.CurrentInstruction.Operands[0]
 	var hs byte = cpu.CurrentInstruction.Operands[1]
 
@@ -1813,7 +1813,7 @@ func (cpu *GbcCPU) LDSP_nn() {
 }
 
 //LD nn, SP
-func (cpu *GbcCPU) LDnn_SP() {
+func (cpu *CPU) LDnn_SP() {
 	var ls byte = cpu.CurrentInstruction.Operands[0]
 	var hs byte = cpu.CurrentInstruction.Operands[1]
 	var addr types.Word = types.Word(utils.JoinBytes(hs, ls))
@@ -1823,12 +1823,12 @@ func (cpu *GbcCPU) LDnn_SP() {
 }
 
 //LD SP, rr
-func (cpu *GbcCPU) LDSP_hl() {
+func (cpu *CPU) LDSP_hl() {
 	cpu.SP = types.Word(utils.JoinBytes(cpu.R.H, cpu.R.L))
 }
 
 //LDHL SP, n
-func (cpu *GbcCPU) LDHLSP_n() {
+func (cpu *CPU) LDHLSP_n() {
 	var n byte = cpu.CurrentInstruction.Operands[0]
 
 	var HL types.Word
@@ -1863,33 +1863,33 @@ func (cpu *GbcCPU) LDHLSP_n() {
 
 //PUSH nn
 //Push register pair nn onto the stack and decrement the SP twice
-func (cpu *GbcCPU) Push_nn(r1, r2 *byte) {
+func (cpu *CPU) Push_nn(r1, r2 *byte) {
 	word := types.Word(utils.JoinBytes(*r1, *r2))
 	cpu.pushWordToStack(word)
 }
 
 //POP nn
 //Pop the stack twice onto register pair nn
-func (cpu *GbcCPU) Pop_nn(r1, r2 *byte) {
+func (cpu *CPU) Pop_nn(r1, r2 *byte) {
 	*r1, *r2 = utils.SplitIntoBytes(uint16(cpu.popWordFromStack()))
 }
 
 //POP AF
 //Pop the stack twice onto register pair AF
-func (cpu *GbcCPU) Pop_AF() {
+func (cpu *CPU) Pop_AF() {
 	cpu.R.A, cpu.R.F = utils.SplitIntoBytes(uint16(cpu.popWordFromStack()))
 	cpu.R.F &= 0xF0
 }
 
 //ADD A,r
 //Add the value in register (r) to register A
-func (cpu *GbcCPU) AddA_r(r *byte) {
+func (cpu *CPU) AddA_r(r *byte) {
 	cpu.R.A = cpu.addBytes(cpu.R.A, *r)
 }
 
 //ADD A,(HL)
 //Add the value in memory addressed in register pair (HL) to register A
-func (cpu *GbcCPU) AddA_hl() {
+func (cpu *CPU) AddA_hl() {
 	var HL types.Word = types.Word(utils.JoinBytes(cpu.R.H, cpu.R.L))
 	var value byte = cpu.ReadByte(HL)
 
@@ -1898,13 +1898,13 @@ func (cpu *GbcCPU) AddA_hl() {
 
 //ADD A,n
 //Add the value in memory addressed PC to register A. Increment the PC by 1
-func (cpu *GbcCPU) AddA_n() {
+func (cpu *CPU) AddA_n() {
 	var value byte = cpu.CurrentInstruction.Operands[0]
 	cpu.R.A = cpu.addBytes(cpu.R.A, value)
 }
 
 //ADDC A,r
-func (cpu *GbcCPU) AddCA_r(r *byte) {
+func (cpu *CPU) AddCA_r(r *byte) {
 	var carry int = 0
 	if cpu.IsFlagSet(C) {
 		carry = 1
@@ -1934,7 +1934,7 @@ func (cpu *GbcCPU) AddCA_r(r *byte) {
 }
 
 //ADDC A,(HL)
-func (cpu *GbcCPU) AddCA_hl() {
+func (cpu *CPU) AddCA_hl() {
 	var HL types.Word = types.Word(utils.JoinBytes(cpu.R.H, cpu.R.L))
 	var hlValue byte = cpu.ReadByte(HL)
 
@@ -1967,7 +1967,7 @@ func (cpu *GbcCPU) AddCA_hl() {
 }
 
 //ADDC A,n
-func (cpu *GbcCPU) AddCA_n() {
+func (cpu *CPU) AddCA_n() {
 	var value byte = cpu.CurrentInstruction.Operands[0]
 	var carry int = 0
 	if cpu.IsFlagSet(C) {
@@ -1998,12 +1998,12 @@ func (cpu *GbcCPU) AddCA_n() {
 }
 
 //SUB A,r
-func (cpu *GbcCPU) SubA_r(r *byte) {
+func (cpu *CPU) SubA_r(r *byte) {
 	cpu.R.A = cpu.subBytes(cpu.R.A, *r)
 }
 
 //SUB A,hl
-func (cpu *GbcCPU) SubA_hl() {
+func (cpu *CPU) SubA_hl() {
 	var HL types.Word = types.Word(utils.JoinBytes(cpu.R.H, cpu.R.L))
 	var value byte = cpu.ReadByte(HL)
 
@@ -2011,13 +2011,13 @@ func (cpu *GbcCPU) SubA_hl() {
 }
 
 //SUB A,n
-func (cpu *GbcCPU) SubA_n() {
+func (cpu *CPU) SubA_n() {
 	var value byte = cpu.CurrentInstruction.Operands[0]
 	cpu.R.A = cpu.subBytes(cpu.R.A, value)
 }
 
 //SBC A,r
-func (cpu *GbcCPU) SubAC_r(r *byte) {
+func (cpu *CPU) SubAC_r(r *byte) {
 	var un int = int(*r) & 0xff
 	var tmpa int = int(cpu.R.A) & 0xff
 	var ua int = int(cpu.R.A) & 0xff
@@ -2048,7 +2048,7 @@ func (cpu *GbcCPU) SubAC_r(r *byte) {
 }
 
 //SBC A, (HL)
-func (cpu *GbcCPU) SubAC_hl() {
+func (cpu *CPU) SubAC_hl() {
 	var HL types.Word = types.Word(utils.JoinBytes(cpu.R.H, cpu.R.L))
 	var value byte = cpu.ReadByte(HL)
 
@@ -2085,7 +2085,7 @@ func (cpu *GbcCPU) SubAC_hl() {
 }
 
 //SBC A, n
-func (cpu *GbcCPU) SubAC_n() {
+func (cpu *CPU) SubAC_n() {
 	var value byte = cpu.CurrentInstruction.Operands[0]
 	var un int = int(value) & 0xff
 	var tmpa int = int(cpu.R.A) & 0xff
@@ -2120,84 +2120,84 @@ func (cpu *GbcCPU) SubAC_n() {
 }
 
 //AND A, r
-func (cpu *GbcCPU) AndA_r(r *byte) {
+func (cpu *CPU) AndA_r(r *byte) {
 	cpu.R.A = cpu.andBytes(cpu.R.A, *r)
 }
 
 //AND A, (HL)
-func (cpu *GbcCPU) AndA_hl() {
+func (cpu *CPU) AndA_hl() {
 	var HL types.Word = types.Word(utils.JoinBytes(cpu.R.H, cpu.R.L))
 	var value byte = cpu.ReadByte(HL)
 	cpu.R.A = cpu.andBytes(cpu.R.A, value)
 }
 
 //AND A, n
-func (cpu *GbcCPU) AndA_n() {
+func (cpu *CPU) AndA_n() {
 	var value byte = cpu.CurrentInstruction.Operands[0]
 	cpu.R.A = cpu.andBytes(cpu.R.A, value)
 }
 
 //OR A, r
-func (cpu *GbcCPU) OrA_r(r *byte) {
+func (cpu *CPU) OrA_r(r *byte) {
 	cpu.R.A = cpu.orBytes(cpu.R.A, *r)
 }
 
 //OR A, (HL)
-func (cpu *GbcCPU) OrA_hl() {
+func (cpu *CPU) OrA_hl() {
 	var HL types.Word = types.Word(utils.JoinBytes(cpu.R.H, cpu.R.L))
 	var value byte = cpu.ReadByte(HL)
 	cpu.R.A = cpu.orBytes(cpu.R.A, value)
 }
 
 //OR A, n
-func (cpu *GbcCPU) OrA_n() {
+func (cpu *CPU) OrA_n() {
 	var value byte = cpu.CurrentInstruction.Operands[0]
 	cpu.R.A = cpu.orBytes(cpu.R.A, value)
 }
 
 //XOR A, r
-func (cpu *GbcCPU) XorA_r(r *byte) {
+func (cpu *CPU) XorA_r(r *byte) {
 	cpu.R.A = cpu.xorBytes(cpu.R.A, *r)
 }
 
 //XOR A, (HL)
-func (cpu *GbcCPU) XorA_hl() {
+func (cpu *CPU) XorA_hl() {
 	var HL types.Word = types.Word(utils.JoinBytes(cpu.R.H, cpu.R.L))
 	var value byte = cpu.ReadByte(HL)
 	cpu.R.A = cpu.xorBytes(cpu.R.A, value)
 }
 
 //XOR A, n
-func (cpu *GbcCPU) XorA_n() {
+func (cpu *CPU) XorA_n() {
 	var value byte = cpu.CurrentInstruction.Operands[0]
 	cpu.R.A = cpu.xorBytes(cpu.R.A, value)
 }
 
 //CP A, r
-func (cpu *GbcCPU) CPA_r(r *byte) {
+func (cpu *CPU) CPA_r(r *byte) {
 	cpu.subBytes(cpu.R.A, *r)
 }
 
 //CP A, (HL)
-func (cpu *GbcCPU) CPA_hl() {
+func (cpu *CPU) CPA_hl() {
 	var hlAddr types.Word = types.Word(utils.JoinBytes(cpu.R.H, cpu.R.L))
 	var hlValue byte = cpu.ReadByte(hlAddr)
 	cpu.subBytes(cpu.R.A, hlValue)
 }
 
 //CP A, n
-func (cpu *GbcCPU) CPA_n() {
+func (cpu *CPU) CPA_n() {
 	var value byte = cpu.CurrentInstruction.Operands[0]
 	cpu.subBytes(cpu.R.A, value)
 }
 
 //INC r
-func (cpu *GbcCPU) Inc_r(r *byte) {
+func (cpu *CPU) Inc_r(r *byte) {
 	*r = cpu.incByte(*r)
 }
 
 //INC (HL)
-func (cpu *GbcCPU) Inc_hl() {
+func (cpu *CPU) Inc_hl() {
 	var hlAddr types.Word = types.Word(utils.JoinBytes(cpu.R.H, cpu.R.L))
 	var hlValue byte = cpu.ReadByte(hlAddr)
 	var result byte = cpu.incByte(hlValue)
@@ -2205,12 +2205,12 @@ func (cpu *GbcCPU) Inc_hl() {
 }
 
 //DEC r
-func (cpu *GbcCPU) Dec_r(r *byte) {
+func (cpu *CPU) Dec_r(r *byte) {
 	*r = cpu.decByte(*r)
 }
 
 //DEC (HL)
-func (cpu *GbcCPU) Dec_hl() {
+func (cpu *CPU) Dec_hl() {
 	var hlAddr types.Word = types.Word(utils.JoinBytes(cpu.R.H, cpu.R.L))
 	var hlValue byte = cpu.ReadByte(hlAddr)
 	var result byte = cpu.decByte(hlValue)
@@ -2219,7 +2219,7 @@ func (cpu *GbcCPU) Dec_hl() {
 
 // --------------- 16 bit operations ---------------
 //ADD HL,rr
-func (cpu *GbcCPU) Addhl_rr(r1, r2 *byte) {
+func (cpu *CPU) Addhl_rr(r1, r2 *byte) {
 	var HL types.Word = types.Word(utils.JoinBytes(cpu.R.H, cpu.R.L))
 	var RR types.Word = types.Word(utils.JoinBytes(*r1, *r2))
 	var result types.Word = cpu.addWords(HL, RR)
@@ -2227,14 +2227,14 @@ func (cpu *GbcCPU) Addhl_rr(r1, r2 *byte) {
 }
 
 //ADD HL,SP
-func (cpu *GbcCPU) Addhl_sp() {
+func (cpu *CPU) Addhl_sp() {
 	var HL types.Word = types.Word(utils.JoinBytes(cpu.R.H, cpu.R.L))
 	var result types.Word = cpu.addWords(HL, cpu.SP)
 	cpu.R.H, cpu.R.L = utils.SplitIntoBytes(uint16(result))
 }
 
 //ADD SP,n
-func (cpu *GbcCPU) Addsp_n() {
+func (cpu *CPU) Addsp_n() {
 	var n byte = cpu.CurrentInstruction.Operands[0]
 
 	var calculation types.Word
@@ -2269,38 +2269,38 @@ func (cpu *GbcCPU) Addsp_n() {
 }
 
 //INC rr
-func (cpu *GbcCPU) Inc_rr(r1, r2 *byte) {
+func (cpu *CPU) Inc_rr(r1, r2 *byte) {
 	var RR types.Word = types.Word(utils.JoinBytes(*r1, *r2))
 	RR += 1
 	*r1, *r2 = utils.SplitIntoBytes(uint16(RR))
 }
 
 //INC SP
-func (cpu *GbcCPU) Inc_sp() {
+func (cpu *CPU) Inc_sp() {
 	cpu.SP = (cpu.SP + 1) & 0xFFFF
 }
 
 //DEC rr
-func (cpu *GbcCPU) Dec_rr(r1, r2 *byte) {
+func (cpu *CPU) Dec_rr(r1, r2 *byte) {
 	var RR types.Word = types.Word(utils.JoinBytes(*r1, *r2))
 	RR -= 1
 	*r1, *r2 = utils.SplitIntoBytes(uint16(RR))
 }
 
 //DEC SP
-func (cpu *GbcCPU) Dec_sp() {
+func (cpu *CPU) Dec_sp() {
 	cpu.SP = (cpu.SP - 1) & 0xFFFF
 }
 
 //CPL
-func (cpu *GbcCPU) CPL() {
+func (cpu *CPU) CPL() {
 	cpu.R.A = ^cpu.R.A
 	cpu.SetFlag(N)
 	cpu.SetFlag(H)
 }
 
 //CCF
-func (cpu *GbcCPU) CCF() {
+func (cpu *CPU) CCF() {
 	if cpu.IsFlagSet(C) {
 		cpu.ResetFlag(C)
 	} else {
@@ -2312,7 +2312,7 @@ func (cpu *GbcCPU) CCF() {
 }
 
 //SCF
-func (cpu *GbcCPU) SCF() {
+func (cpu *CPU) SCF() {
 	cpu.SetFlag(C)
 
 	cpu.ResetFlag(N)
@@ -2322,7 +2322,7 @@ func (cpu *GbcCPU) SCF() {
 //DAA - this instruction was a complete PITA to implement
 //thankfully DParrot from here http://forums.nesdev.com/viewtopic.php?t=9088
 //provided a correct solution that passes the blargg tests
-func (cpu *GbcCPU) Daa() {
+func (cpu *CPU) Daa() {
 	var a types.Word = types.Word(cpu.R.A)
 
 	if cpu.IsFlagSet(N) == false {
@@ -2361,12 +2361,12 @@ func (cpu *GbcCPU) Daa() {
 }
 
 //SWAP r
-func (cpu *GbcCPU) Swap_r(r *byte) {
+func (cpu *CPU) Swap_r(r *byte) {
 	*r = cpu.swapByte(*r)
 }
 
 //SWAP (HL)
-func (cpu *GbcCPU) Swap_hl() {
+func (cpu *CPU) Swap_hl() {
 	var hlAddr types.Word = types.Word(utils.JoinBytes(cpu.R.H, cpu.R.L))
 	var hlValue byte = cpu.ReadByte(hlAddr)
 	var result = cpu.swapByte(hlValue)
@@ -2374,7 +2374,7 @@ func (cpu *GbcCPU) Swap_hl() {
 }
 
 //RLCA
-func (cpu *GbcCPU) RLCA() {
+func (cpu *CPU) RLCA() {
 	var bit7 bool = false
 
 	if cpu.R.A&0x80 == 0x80 {
@@ -2399,7 +2399,7 @@ func (cpu *GbcCPU) RLCA() {
 }
 
 //RLA
-func (cpu *GbcCPU) RLA() {
+func (cpu *CPU) RLA() {
 	var bit7 bool = false
 	var calculation byte = cpu.R.A
 
@@ -2427,7 +2427,7 @@ func (cpu *GbcCPU) RLA() {
 }
 
 //RLC r
-func (cpu *GbcCPU) Rlc_r(r *byte) {
+func (cpu *CPU) Rlc_r(r *byte) {
 	var bit7 bool = false
 
 	if *r&0x80 == 0x80 {
@@ -2458,7 +2458,7 @@ func (cpu *GbcCPU) Rlc_r(r *byte) {
 }
 
 //RLC (HL)
-func (cpu *GbcCPU) Rlc_hl() {
+func (cpu *CPU) Rlc_hl() {
 	var hlAddr types.Word = types.Word(utils.JoinBytes(cpu.R.H, cpu.R.L))
 	var hlValue byte = cpu.mmu.ReadByte(hlAddr)
 
@@ -2491,7 +2491,7 @@ func (cpu *GbcCPU) Rlc_hl() {
 }
 
 //RL r
-func (cpu *GbcCPU) Rl_r(r *byte) {
+func (cpu *CPU) Rl_r(r *byte) {
 	var bit7 bool = false
 	var calculation byte = *r
 
@@ -2524,7 +2524,7 @@ func (cpu *GbcCPU) Rl_r(r *byte) {
 }
 
 //RL (HL)
-func (cpu *GbcCPU) Rl_hl() {
+func (cpu *CPU) Rl_hl() {
 	var HL types.Word = types.Word(utils.JoinBytes(cpu.R.H, cpu.R.L))
 	var value byte = cpu.ReadByte(HL)
 
@@ -2559,7 +2559,7 @@ func (cpu *GbcCPU) Rl_hl() {
 }
 
 //RRCA
-func (cpu *GbcCPU) RRCA() {
+func (cpu *CPU) RRCA() {
 	var bit0 bool = false
 
 	if cpu.R.A&0x01 == 0x01 {
@@ -2584,7 +2584,7 @@ func (cpu *GbcCPU) RRCA() {
 }
 
 //RRA
-func (cpu *GbcCPU) RRA() {
+func (cpu *CPU) RRA() {
 	var bit0 bool = false
 	var calculation byte = cpu.R.A
 
@@ -2612,7 +2612,7 @@ func (cpu *GbcCPU) RRA() {
 }
 
 //RRC r
-func (cpu *GbcCPU) Rrc_r(r *byte) {
+func (cpu *CPU) Rrc_r(r *byte) {
 	var bit0 bool = false
 
 	if *r&0x01 == 0x01 {
@@ -2642,7 +2642,7 @@ func (cpu *GbcCPU) Rrc_r(r *byte) {
 }
 
 //RRC (HL)
-func (cpu *GbcCPU) Rrc_hl() {
+func (cpu *CPU) Rrc_hl() {
 	var hlAddr types.Word = types.Word(utils.JoinBytes(cpu.R.H, cpu.R.L))
 	var hlValue byte = cpu.mmu.ReadByte(hlAddr)
 	var bit0 bool = false
@@ -2674,7 +2674,7 @@ func (cpu *GbcCPU) Rrc_hl() {
 }
 
 //RR r
-func (cpu *GbcCPU) Rr_r(r *byte) {
+func (cpu *CPU) Rr_r(r *byte) {
 	var bit0 bool = false
 	var calculation byte = *r
 
@@ -2707,7 +2707,7 @@ func (cpu *GbcCPU) Rr_r(r *byte) {
 }
 
 //RR (HL)
-func (cpu *GbcCPU) Rr_hl() {
+func (cpu *CPU) Rr_hl() {
 	var HLAddr types.Word = types.Word(utils.JoinBytes(cpu.R.H, cpu.R.L))
 	var value byte = cpu.ReadByte(HLAddr)
 
@@ -2742,7 +2742,7 @@ func (cpu *GbcCPU) Rr_hl() {
 }
 
 //SLA r
-func (cpu *GbcCPU) Sla_r(r *byte) {
+func (cpu *CPU) Sla_r(r *byte) {
 	var bit7 bool = false
 	var calculation byte = *r
 
@@ -2771,7 +2771,7 @@ func (cpu *GbcCPU) Sla_r(r *byte) {
 }
 
 //SLA (HL)
-func (cpu *GbcCPU) Sla_hl() {
+func (cpu *CPU) Sla_hl() {
 	var HL types.Word = types.Word(utils.JoinBytes(cpu.R.H, cpu.R.L))
 	var value byte = cpu.ReadByte(HL)
 	var calculation byte = value
@@ -2802,7 +2802,7 @@ func (cpu *GbcCPU) Sla_hl() {
 }
 
 //SRA r
-func (cpu *GbcCPU) Sra_r(r *byte) {
+func (cpu *CPU) Sra_r(r *byte) {
 	var bit0 bool = false
 	var calculation byte = *r
 
@@ -2831,7 +2831,7 @@ func (cpu *GbcCPU) Sra_r(r *byte) {
 }
 
 //SRA (HL)
-func (cpu *GbcCPU) Sra_hl() {
+func (cpu *CPU) Sra_hl() {
 	var HL types.Word = types.Word(utils.JoinBytes(cpu.R.H, cpu.R.L))
 	var value byte = cpu.ReadByte(HL)
 	var calculation byte = value
@@ -2862,7 +2862,7 @@ func (cpu *GbcCPU) Sra_hl() {
 }
 
 //SRL r
-func (cpu *GbcCPU) Srl_r(r *byte) {
+func (cpu *CPU) Srl_r(r *byte) {
 	var bit0 bool = false
 	var calculation byte = *r
 
@@ -2891,7 +2891,7 @@ func (cpu *GbcCPU) Srl_r(r *byte) {
 }
 
 //SRL (HL)
-func (cpu *GbcCPU) Srl_hl() {
+func (cpu *CPU) Srl_hl() {
 	var HL types.Word = types.Word(utils.JoinBytes(cpu.R.H, cpu.R.L))
 	var value byte = cpu.ReadByte(HL)
 	var calculation byte = value
@@ -2922,24 +2922,24 @@ func (cpu *GbcCPU) Srl_hl() {
 }
 
 //BIT b, r
-func (cpu *GbcCPU) Bitb_r(b byte, r *byte) {
+func (cpu *CPU) Bitb_r(b byte, r *byte) {
 	cpu.bitTest(b, *r)
 }
 
 //BIT b,(HL)
-func (cpu *GbcCPU) Bitb_hl(b byte) {
+func (cpu *CPU) Bitb_hl(b byte) {
 	var HL types.Word = types.Word(utils.JoinBytes(cpu.R.H, cpu.R.L))
 	var value byte = cpu.ReadByte(HL)
 	cpu.bitTest(b, value)
 }
 
 // SET b, r
-func (cpu *GbcCPU) Setb_r(b byte, r *byte) {
+func (cpu *CPU) Setb_r(b byte, r *byte) {
 	*r = cpu.setBit(b, *r)
 }
 
 // SET b, (HL)
-func (cpu *GbcCPU) Setb_hl(b byte) {
+func (cpu *CPU) Setb_hl(b byte) {
 	var HL types.Word = types.Word(utils.JoinBytes(cpu.R.H, cpu.R.L))
 	var HLValue byte = cpu.ReadByte(HL)
 	var result byte = cpu.setBit(b, HLValue)
@@ -2948,12 +2948,12 @@ func (cpu *GbcCPU) Setb_hl(b byte) {
 }
 
 // RES b, r
-func (cpu *GbcCPU) Resb_r(b byte, r *byte) {
+func (cpu *CPU) Resb_r(b byte, r *byte) {
 	*r = cpu.resetBit(b, *r)
 }
 
 // RES b, (HL)
-func (cpu *GbcCPU) Resb_hl(b byte) {
+func (cpu *CPU) Resb_hl(b byte) {
 	var HL types.Word = types.Word(utils.JoinBytes(cpu.R.H, cpu.R.L))
 	var HLValue byte = cpu.ReadByte(HL)
 	var result byte = cpu.resetBit(b, HLValue)
@@ -2962,7 +2962,7 @@ func (cpu *GbcCPU) Resb_hl(b byte) {
 }
 
 //JP nn
-func (cpu *GbcCPU) JP_nn() {
+func (cpu *CPU) JP_nn() {
 	var ls byte = cpu.CurrentInstruction.Operands[0]
 	var hs byte = cpu.CurrentInstruction.Operands[1]
 	cpu.PC = types.Word(utils.JoinBytes(hs, ls))
@@ -2970,14 +2970,14 @@ func (cpu *GbcCPU) JP_nn() {
 }
 
 //JP (HL)
-func (cpu *GbcCPU) JP_hl() {
+func (cpu *CPU) JP_hl() {
 	var HL types.Word = types.Word(utils.JoinBytes(cpu.R.H, cpu.R.L))
 	cpu.PC = HL
 	cpu.PCJumped = true
 }
 
 //JP cc, nn
-func (cpu *GbcCPU) JPcc_nn(flag int, jumpWhen bool) {
+func (cpu *CPU) JPcc_nn(flag int, jumpWhen bool) {
 	var ls byte = cpu.CurrentInstruction.Operands[0]
 	var hs byte = cpu.CurrentInstruction.Operands[1]
 
@@ -2991,7 +2991,7 @@ func (cpu *GbcCPU) JPcc_nn(flag int, jumpWhen bool) {
 }
 
 //JR n
-func (cpu *GbcCPU) JR_n() {
+func (cpu *CPU) JR_n() {
 	var n byte = cpu.CurrentInstruction.Operands[0]
 	if n != 0x00 {
 		cpu.PC += types.Word(cpu.CurrentInstruction.OperandsSize + 1)
@@ -3007,7 +3007,7 @@ func (cpu *GbcCPU) JR_n() {
 }
 
 //JR cc, nn
-func (cpu *GbcCPU) JRcc_nn(flag int, jumpWhen bool) {
+func (cpu *CPU) JRcc_nn(flag int, jumpWhen bool) {
 	var n byte = cpu.CurrentInstruction.Operands[0]
 
 	if cpu.IsFlagSet(flag) == jumpWhen {
@@ -3030,7 +3030,7 @@ func (cpu *GbcCPU) JRcc_nn(flag int, jumpWhen bool) {
 
 // CALL nn
 //Push address of next instruction onto stack and then jump to address nn
-func (cpu *GbcCPU) Call_nn() {
+func (cpu *CPU) Call_nn() {
 	var ls byte = cpu.CurrentInstruction.Operands[0]
 	var hs byte = cpu.CurrentInstruction.Operands[1]
 	var nextInstr types.Word = cpu.PC + 3
@@ -3040,7 +3040,7 @@ func (cpu *GbcCPU) Call_nn() {
 }
 
 // CALL cc,nn
-func (cpu *GbcCPU) Callcc_nn(flag int, callWhen bool) {
+func (cpu *CPU) Callcc_nn(flag int, callWhen bool) {
 	var ls byte = cpu.CurrentInstruction.Operands[0]
 	var hs byte = cpu.CurrentInstruction.Operands[1]
 	var nextInstr types.Word = cpu.PC + 3
@@ -3056,13 +3056,13 @@ func (cpu *GbcCPU) Callcc_nn(flag int, callWhen bool) {
 }
 
 // RET
-func (cpu *GbcCPU) Ret() {
+func (cpu *CPU) Ret() {
 	cpu.PC = cpu.popWordFromStack()
 	cpu.PCJumped = true
 }
 
 // RET cc
-func (cpu *GbcCPU) Retcc(flag int, returnWhen bool) {
+func (cpu *CPU) Retcc(flag int, returnWhen bool) {
 	if cpu.IsFlagSet(flag) == returnWhen {
 		cpu.PC = cpu.popWordFromStack()
 		cpu.PCJumped = true
@@ -3073,14 +3073,14 @@ func (cpu *GbcCPU) Retcc(flag int, returnWhen bool) {
 }
 
 // RETI
-func (cpu *GbcCPU) Ret_i() {
+func (cpu *CPU) Ret_i() {
 	cpu.PC = cpu.popWordFromStack()
 	cpu.InterruptsEnabled = true
 	cpu.PCJumped = true
 }
 
 // RST n
-func (cpu *GbcCPU) Rst(n byte) {
+func (cpu *CPU) Rst(n byte) {
 	cpu.pushWordToStack(cpu.PC + 1)
 	cpu.PC = types.Word(n)
 	cpu.PCJumped = true

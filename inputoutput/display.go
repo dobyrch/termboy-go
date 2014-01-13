@@ -14,20 +14,14 @@ type Display struct {
 	offY                 int
 }
 
-func (s *Display) init(title string, screenSizeMultiplier int) error {
-        //TODO: use ScreenSizeMultiplier as an indicator of whether to use
-        //TODO: left half block or top half block
-        //TODO: Perhaps use escape code to set title of terminal?
+func (s *Display) init() {
 	ansi.HideCursor()
 	ansi.ClearScreen()
         ansi.DefineColor(ansi.BLACK, 0x000000)
         ansi.DefineColor(ansi.BLUE, 0x555555)
         ansi.DefineColor(ansi.CYAN, 0xAAAAAA)
         ansi.DefineColor(ansi.WHITE, 0xFFFFFF)
-
 	s.initOffset()
-
-        return nil
 }
 
 func (s *Display) drawFrame(screenData *types.Screen) {

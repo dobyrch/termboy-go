@@ -31,17 +31,11 @@ func NewIO() *IO {
 	return i
 }
 
-func (i *IO) Init(title string, screenSize int) error {
-	err := i.Display.init(title, screenSize)
-	//TODO: Is it necesssary to return an error?
-	if err != nil {
-		return err
-	}
+func (i *IO) Init() {
+	i.Display.init()
+	i.KeyHandler.init(DefaultControlScheme) //TODO: allow user to define controlscheme
 
-	i.KeyHandler.Init(DefaultControlScheme) //TODO: allow user to define controlscheme
 	go i.pollStdin()
-
-	return nil
 }
 
 //This will wait for updates to the display or audio and dispatch them accordingly

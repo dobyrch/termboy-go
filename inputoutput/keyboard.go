@@ -15,7 +15,7 @@ import (
 	return nil
 }*/
 
-var DefaultControlScheme ControlScheme = ControlScheme{
+var DefaultControlScheme ControlScheme = ControlScheme {
         RIGHT:  0x21,
         LEFT:   0x1F,
         UP:     0x12,
@@ -44,7 +44,7 @@ type KeyHandler struct {
         irqHandler    components.IRQHandler
 }
 
-func (k *KeyHandler) Init(cs ControlScheme) {
+func (k *KeyHandler) init(cs ControlScheme) {
         k.controlScheme = cs
         k.Reset()
 	C.kbd_init()
