@@ -20,16 +20,10 @@ func (s *Display) init(title string, screenSizeMultiplier int) error {
         //TODO: Perhaps use escape code to set title of terminal?
 	ansi.HideCursor()
 	ansi.ClearScreen()
-	//TODO: use constants in ansi.go in place of hex values
-        ansi.DefineColor(0x0, 0x000000)
-        ansi.DefineColor(0x4, 0x555555)
-        ansi.DefineColor(0x6, 0xAAAAAA)
-        ansi.DefineColor(0x7, 0xFFFFFF)
-	//TODO: how should bright colors be dealt with?
-        ansi.DefineColor(0x8, 0x000000)
-        ansi.DefineColor(0xC, 0x555555)
-        ansi.DefineColor(0xE, 0xAAAAAA)
-        ansi.DefineColor(0xF, 0xFFFFFF)
+        ansi.DefineColor(ansi.BLACK, 0x000000)
+        ansi.DefineColor(ansi.BLUE, 0x555555)
+        ansi.DefineColor(ansi.CYAN, 0xAAAAAA)
+        ansi.DefineColor(ansi.WHITE, 0xFFFFFF)
 
 	s.initOffset()
 
@@ -46,24 +40,24 @@ func (s *Display) drawFrame(screenData *types.Screen) {
 
 			switch c1.Red {
 			case 0:
-				fg = 0x0
+				fg = ansi.BLACK
 			case 96:
-				fg = 0x4
+				fg = ansi.BLUE
 			case 196:
-				fg = 0x6
+				fg = ansi.CYAN
 			case 235:
-				fg = 0x7
+				fg = ansi.WHITE
 			}
 
 			switch c2.Red {
 			case 0:
-				bg = 0x0
+				bg = ansi.BLACK
 			case 96:
-				bg = 0x4
+				bg = ansi.BLUE
 			case 196:
-				bg = 0x6
+				bg = ansi.CYAN
 			case 235:
-				bg = 0x7
+				bg = ansi.WHITE
 			}
 
 			ansi.SetForeground(fg)
@@ -98,5 +92,5 @@ func (s *Display) CleanUp() {
 	ansi.ClearScreen()
 	ansi.ShowCursor()
 	ansi.SetForeground(ansi.BLACK)
-	ansi.SetBackground(ansi.WHITE)
+	ansi.SetBackground(ansi.BRIGHT | ansi.WHITE)
 }

@@ -15,6 +15,7 @@ const (
 	MAGENTA
 	CYAN
 	WHITE
+	BRIGHT //bitwise OR with other colors
 )
 
 var fg, bg = 0, 7
