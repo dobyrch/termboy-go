@@ -45,8 +45,8 @@ func Printf(format string, a ...interface{}) {
 }
 
 func ClearScreen() {
-	fmt.Printf("%c[H", ESC)
 	fmt.Printf("%c[2J", ESC)
+	fmt.Printf("%c[H", ESC)
 }
 
 func HideCursor() {

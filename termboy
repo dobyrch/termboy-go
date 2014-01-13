@@ -1,5 +1,6 @@
 #!/usr/bin/sh
 
+#TODO: do this in go
 if [ $TERM != 'linux' ]; then
 	echo 'Term Boy can only be run in a virtual console'
 	echo '(Try pressing CTRL+ALT+F2)'
@@ -7,4 +8,4 @@ if [ $TERM != 'linux' ]; then
 fi
 
 #TODO: save and restore font
-setfont -h4 default8x16 && termboy-go $1 ; setfont
+setfont -h4 && termboy-go $1; setfont

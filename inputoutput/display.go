@@ -1,6 +1,8 @@
 package inputoutput
 
 import (
+	"syscall"
+	"unsafe"
 	"github.com/dobyrch/termboy-go/ansi"
 	"github.com/dobyrch/termboy-go/types"
 )
@@ -18,6 +20,7 @@ func (s *Display) init(title string, screenSizeMultiplier int) error {
         //TODO: Perhaps use escape code to set title of terminal?
 	ansi.HideCursor()
 	ansi.ClearScreen()
+	//TODO: use constants in ansi.go in place of hex values
         ansi.DefineColor(0x0, 0x000000)
         ansi.DefineColor(0x4, 0x555555)
         ansi.DefineColor(0x6, 0xAAAAAA)
@@ -27,6 +30,8 @@ func (s *Display) init(title string, screenSizeMultiplier int) error {
         ansi.DefineColor(0xC, 0x555555)
         ansi.DefineColor(0xE, 0xAAAAAA)
         ansi.DefineColor(0xF, 0xFFFFFF)
+
+	s.initOffset()
 
         return nil
 }
@@ -63,41 +68,35 @@ func (s *Display) drawFrame(screenData *types.Screen) {
 
 			ansi.SetForeground(fg)
 			ansi.SetBackground(bg)
-			ansi.PutRune('▌', x/2, y)
+			ansi.PutRune('▌', x/2 + s.offX, y + s.offY)
                 }
         }
 }
 
-/*
+
 func (s *Display) initOffset() {
-	var x, y int
+	var dimensions [4]uint16
 
-	// Move cursor to bottom right
-	fmt.Printf("%c[1000B", ESC)
-	fmt.Printf("%c[1000C", ESC)
-	fmt.Printf("%c[6n", ESC)
+	if _, _, err := syscall.Syscall6(syscall.SYS_IOCTL, uintptr(0), uintptr(syscall.TIOCGWINSZ), uintptr(unsafe.Pointer(&dimensions)), 0, 0, 0); err != 0 {
+		return
+	}
 
-	// Get current position
-	cup := fmt.Sprintf("%c[%%d;%%dR", ESC)
-	n, scanError := fmt.Scanf(cup, &y, &x)
-	file, _ := os.Create("error.out")
-	fmt.Fprintf(file, "%d: %s\n", n, scanError)
-	file.Close()
+	x := int(dimensions[1])
+	y := int(dimensions[0])
 
-	switch {
-	case x > 160/2:
-		s.offX = (x+1)/2 - 160/4
-	case y > 144:
-		s.offY = (y+1)/2 - 144/2
-	default:
-		//TODO: are struct members initialized to 0?
-		s.offX = 0
-		s.offY = 0
+	if (x > 160/2) {
+		s.offX = x/2 - 160/4
+	}
+
+	if (y > 144) {
+		s.offY = y/2 - 144/2
 	}
 }
-*/
+
 
 func (s *Display) CleanUp() {
 	ansi.ClearScreen()
 	ansi.ShowCursor()
+	ansi.SetForeground(ansi.BLACK)
+	ansi.SetBackground(ansi.WHITE)
 }
