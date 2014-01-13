@@ -13,6 +13,7 @@ import (
 	"log"
 	"github.com/dobyrch/termboy-go/mmu"
 	"os"
+	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"runtime"
@@ -152,9 +153,19 @@ func main() {
 		os.Exit(1)
 	}
 
+	if (os.Getenv("TERM") != "linux") {
+		fmt.Println("Term Boy can only be run in the Linux console")
+		fmt.Println("(Try pressing CTRL+ALT+F2)")
+		os.Exit(1)
+	}
+
 	if flag.NArg() != 1 {
-		log.Fatalf("Please specify the location of a ROM to boot")
-		return
+		fmt.Println("Please specify the location of a ROM to boot")
+		os.Exit(1)
+	}
+
+	if err := exec.Command("setfont", "-h4").Run(); err != nil {
+		fmt.Println("Failed to set font height")
 	}
 
 	//Parse and validate settings file (if found)
@@ -318,6 +329,7 @@ func (gb *GameBoy) setupWithoutBoot() {
 }
 
 func (gb *GameBoy) Poweroff() {
+	exec.Command("setfont").Run()
 	gb.mmu.SaveCartridgeRam(gb.config.SavesDir)
 	gb.io.Display.CleanUp()
 	gb.io.KeyHandler.RestoreKeyboard()

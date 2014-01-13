@@ -27,8 +27,7 @@ build() {
 
 package() {
   cd "${srcdir}/src/github.com/dobyrch/${_pkgname}"
-  install -Dm 755 "${_pkgname}" "${pkgdir}/usr/bin/${_pkgname}"
-  install -Dm 755 "${pkgname}" "${pkgdir}/usr/bin/${pkgname}"
+  install -Dm 755 "${_pkgname}" "${pkgdir}/usr/bin/${pkgname}"
   install -Dm 644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
 }
 

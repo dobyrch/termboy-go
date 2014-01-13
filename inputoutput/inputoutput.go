@@ -2,7 +2,6 @@ package inputoutput
 
 import (
 	"io"
-	//"log"
 	"os"
 	"github.com/dobyrch/termboy-go/types"
 )
