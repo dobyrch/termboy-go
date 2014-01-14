@@ -2,7 +2,7 @@
 
 pkgname=termboy
 _pkgname=termboy-go
-pkgver=0.1.0
+pkgver=0.1.1
 pkgrel=1
 pkgdesc='A Nintendo GameBoy emulator for the Linux console'
 arch=(i686 x86_64)
@@ -10,7 +10,7 @@ url="https://github.com/dobyrch/${_pkgname}"
 license=(MIT)
 makedepends=(go)
 source=("https://github.com/dobyrch/${_pkgname}/archive/v${pkgver}.tar.gz")
-sha256sums=('bf84ff3caed426b3b1e7602fdc7075d895e47d29aac13a9e8d1039cc57551ac1')
+sha256sums=('a74b7c616fc895846259bd19ef6805f2ac1542b0c3a0cbaa457deb4a982b9588')
 
 prepare() {
   # `go build` expects the source code to exist in
