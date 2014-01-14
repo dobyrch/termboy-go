@@ -13,7 +13,6 @@ import (
 	"log"
 	"github.com/dobyrch/termboy-go/mmu"
 	"os"
-	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"runtime"
@@ -164,10 +163,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := exec.Command("setfont", "-h4").Run(); err != nil {
-		fmt.Println("Failed to set font height")
-	}
-
 	//Parse and validate settings file (if found)
 	conf := NewConfig()
 
@@ -191,6 +186,8 @@ func main() {
 	}
 
 	var gb *GameBoy = NewGameBoy()
+	defer gb.Poweroff()
+
 	gb.config = *conf
 
 	if err := gb.mmu.LoadBIOS(BOOTROM); err != nil {
@@ -207,7 +204,7 @@ func main() {
 
 		//set breakpoint if defined
 		if b, err := utils.StringToWord(gb.config.BreakOn); err != nil {
-			log.Fatalln("Cannot parse breakpoint:", gb.config.BreakOn, "\n\t", err)
+			log.Panicln("Cannot parse breakpoint:", gb.config.BreakOn, "\n\t", err)
 		} else {
 			gb.debugOptions.breakWhen = types.Word(b)
 //			log.Println("Emulator will break into debugger when PC = ", gb.debugOptions.breakWhen)
@@ -241,6 +238,7 @@ func main() {
 		gb.Poweroff()
 	}()
 
+
 	//Start emulator code in a goroutine
 	go gb.Run()
 
@@ -250,7 +248,6 @@ func main() {
 	//Run IO operations until user presses ESC
 	gb.io.Run()
 
-	gb.Poweroff()
 }
 
 func (gb *GameBoy) setupBoot() {
@@ -329,11 +326,14 @@ func (gb *GameBoy) setupWithoutBoot() {
 }
 
 func (gb *GameBoy) Poweroff() {
-	exec.Command("setfont").Run()
 	gb.mmu.SaveCartridgeRam(gb.config.SavesDir)
 	gb.io.Display.CleanUp()
 	gb.io.KeyHandler.RestoreKeyboard()
-//	log.Println("Goodbye!")
+
+	if r := recover(); r != nil {
+		fmt.Println(r)
+	}
+
 	os.Exit(0)
 }
 

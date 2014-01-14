@@ -38,7 +38,7 @@ func (m *MBC0) Write(addr types.Word, value byte) {
 
 func (m *MBC0) Read(addr types.Word) byte {
 	if addr < 0x0000 || addr > 0x7FFF {
-		log.Fatalf(m.Name+": Cannot read from MBC for address: %s!", addr)
+		log.Panicf(m.Name+": Cannot read from MBC for address: %s!", addr)
 	}
 
 	return m.romBank[addr]

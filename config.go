@@ -30,7 +30,7 @@ var title *string = flag.String(TITLE_FLAG, TITLE, "Title to use")
 var fps *bool = flag.Bool(SHOW_FPS_FLAG, false, "Calculate and display frames per second")
 var screenSizeMultiplier *int = flag.Int(SCREEN_SIZE_FLAG, 1, "Screen size multiplier")
 var skipBoot *bool = flag.Bool(SKIP_BOOT_FLAG, false, "Skip boot sequence")
-var colorMode *bool = flag.Bool(COLOR_MODE_FLAG, true, "Emulates Gameboy Color Hardware")
+var colorMode *bool = flag.Bool(COLOR_MODE_FLAG, false, "Emulates Gameboy Color Hardware")
 var help *bool = flag.Bool(HELP_FLAG, false, "Show this help message")
 
 //debug stuff...

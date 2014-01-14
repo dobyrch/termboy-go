@@ -330,15 +330,15 @@ func (mmu *MMU) ReadByteFromRegister(addr types.Word) byte {
 		return mmu.dmgStatusRegister
 	case CGB_DOUBLE_SPEED_PREP_REG:
 		if mmu.RunningColorGBHardware == false {
-			log.Fatalf("%s: WARNING -> Attempting to read from %s in non-CGB mode! ROM may have unexpected behaviour (ROM is probably unsupported in non-CGB mode)", PREFIX, addr)
+			log.Panicf("%s: WARNING -> Attempting to read from %s in non-CGB mode! ROM may have unexpected behaviour (ROM is probably unsupported in non-CGB mode)", PREFIX, addr)
 		}
 		return mmu.cgbDoubleSpeedPreparationRegister
 	case CGB_INFRARED_PORT_REG:
-		log.Fatalf("%s: Attempting to read from infrared port register (%s), this is currently unsupported", PREFIX, addr)
+		log.Panicf("%s: Attempting to read from infrared port register (%s), this is currently unsupported", PREFIX, addr)
 		return 0x00
 	case CGB_WRAM_BANK_SELECT:
 		if mmu.RunningColorGBHardware == false {
-			log.Fatalf("%s: WARNING -> Attempting to read from %s in non-CGB mode! ROM may have unexpected behaviour (ROM is probably unsupported in non-CGB mode)", PREFIX, addr)
+			log.Panicf("%s: WARNING -> Attempting to read from %s in non-CGB mode! ROM may have unexpected behaviour (ROM is probably unsupported in non-CGB mode)", PREFIX, addr)
 			return 0x00
 		}
 		return mmu.cgbWramBankSelectedRegister
@@ -370,7 +370,7 @@ func (mmu *MMU) WriteToWorkingRAM(addr types.Word, value byte) {
 			mmu.internalRAM[1][bankAddr] = value
 		}
 	} else {
-		log.Fatalf("Address %s is invalid for CGB working RAM!", addr)
+		log.Panicf("Address %s is invalid for CGB working RAM!", addr)
 	}
 }
 
@@ -396,7 +396,7 @@ func (mmu *MMU) ReadFromWorkingRAM(addr types.Word) byte {
 			return mmu.internalRAM[1][bankAddr]
 		}
 	} else {
-		log.Fatalf("Address %s is invalid for CGB working RAM!", addr)
+		log.Panicf("Address %s is invalid for CGB working RAM!", addr)
 	}
 
 	return 0x00

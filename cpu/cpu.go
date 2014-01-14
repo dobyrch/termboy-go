@@ -184,7 +184,7 @@ func (cpu *CPU) ResetFlag(flag int) {
 	case C:
 		cpu.R.F = cpu.resetBit(4, cpu.R.F)
 	default:
-		log.Fatalf(PREFIX+" Unknown flag %c", flag)
+		log.Panicf(PREFIX+" Unknown flag %c", flag)
 	}
 	cpu.R.F &= 0xF0
 }
@@ -200,7 +200,7 @@ func (cpu *CPU) SetFlag(flag int) {
 	case C:
 		cpu.R.F = cpu.setBit(4, cpu.R.F)
 	default:
-		log.Fatalf(PREFIX+" Unknown flag %c", flag)
+		log.Panicf(PREFIX+" Unknown flag %c", flag)
 	}
 	cpu.R.F &= 0xF0
 }
@@ -216,7 +216,7 @@ func (cpu *CPU) IsFlagSet(flag int) bool {
 	case C:
 		return cpu.R.F&0x10 == 0x10
 	default:
-		log.Fatalf(PREFIX+" Unknown flag %c", flag)
+		log.Panicf(PREFIX+" Unknown flag %c", flag)
 	}
 	return false
 }
@@ -741,7 +741,7 @@ func (cpu *CPU) DispatchCB(Opcode byte) {
 		cpu.Setb_r(0x07, &cpu.R.A)
 
 	default:
-		log.Fatalf(PREFIX+" Invalid/Unknown instruction %X", Opcode)
+		log.Panicf(PREFIX+" Invalid/Unknown instruction %X", Opcode)
 	}
 }
 
@@ -1236,13 +1236,13 @@ func (cpu *CPU) Dispatch(Opcode byte) {
 	case 0xFF: //RST n
 		cpu.Rst(0x38)
 	default:
-		log.Fatalf(PREFIX+" Invalid/Unknown instruction %X", Opcode)
+		log.Panicf(PREFIX+" Invalid/Unknown instruction %X", Opcode)
 	}
 }
 
 func (cpu *CPU) Step() int {
 	if err := cpu.Validate(); err != nil {
-		log.Fatalln(PREFIX, err)
+		log.Panicln(PREFIX, err)
 	}
 	cpu.LastInstrCycle.Reset()
 
@@ -1327,7 +1327,7 @@ func (cpu *CPU) CheckForInterrupts() bool {
 				cpu.InterruptsEnabled = false
 				return true
 			default:
-				log.Fatalf("Unknown interrupt = %d", interrupt)
+				log.Panicf("Unknown interrupt = %d", interrupt)
 			}
 		}
 	}
@@ -1401,14 +1401,14 @@ func (cpu *CPU) popWordFromStack() types.Word {
 
 func (cpu *CPU) ReadByte(addr types.Word) byte {
 	if err := cpu.Validate(); err != nil {
-		log.Fatalln(PREFIX, err)
+		log.Panicln(PREFIX, err)
 	}
 	return cpu.mmu.ReadByte(addr)
 }
 
 func (cpu *CPU) WriteByte(addr types.Word, value byte) {
 	if err := cpu.Validate(); err != nil {
-		log.Fatalln(PREFIX, err)
+		log.Panicln(PREFIX, err)
 	}
 	cpu.mmu.WriteByte(addr, value)
 }

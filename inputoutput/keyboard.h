@@ -9,6 +9,7 @@
 
 static struct termios tty_old;
 static int kbd_old;
+static int initialized = 0;
 
 int kbd_init() {
 	struct termios tty_attr;
@@ -33,12 +34,16 @@ int kbd_init() {
 	tcsetattr(STDIN_FILENO, TCSANOW, &tty_attr);
 
 	ioctl(STDIN_FILENO, KDSKBMODE, K_RAW);
+
+	initialized = 1;
 	return 1;
 }
 
 void kbd_restore() {
-	tcsetattr(STDIN_FILENO, TCSAFLUSH, &tty_old);
-	ioctl(STDIN_FILENO, KDSKBMODE, kbd_old);
+	if (initialized) {
+		tcsetattr(STDIN_FILENO, TCSAFLUSH, &tty_old);
+		ioctl(STDIN_FILENO, KDSKBMODE, kbd_old);
+	}
 }
 
 #endif
