@@ -30,25 +30,13 @@ func (s *Display) init() {
 }
 
 func (s *Display) drawFrame(screenData *types.Screen) {
-        for y := 0; y < SCREEN_HEIGHT; y ++ {
-                for x := 0; x < SCREEN_WIDTH; x += 2 {
-                        c1 := screenData[y][x]
-                        c2 := screenData[y][x+1]
+        for y := 0; y < SCREEN_HEIGHT; y++ {
+                for x := 0; x < SCREEN_WIDTH; x++ {
+                        c := screenData[y][x]
 
-			var fg, bg int
+			var bg int
 
-			switch c1.Red {
-			case 0:
-				fg = ansi.BLACK
-			case 96:
-				fg = ansi.BLUE
-			case 196:
-				fg = ansi.CYAN
-			case 235:
-				fg = ansi.WHITE
-			}
-
-			switch c2.Red {
+			switch c.Red {
 			case 0:
 				bg = ansi.BLACK
 			case 96:
@@ -59,9 +47,8 @@ func (s *Display) drawFrame(screenData *types.Screen) {
 				bg = ansi.WHITE
 			}
 
-			ansi.SetForeground(fg)
 			ansi.SetBackground(bg)
-			ansi.PutRune('▌', x/2 + s.offX, y + s.offY)
+			ansi.PutRune(' ', x + s.offX, y + s.offY)
                 }
         }
 }
@@ -77,8 +64,8 @@ func (s *Display) initOffset() {
 	x := int(dimensions[1])
 	y := int(dimensions[0])
 
-	if (x > 160/2) {
-		s.offX = x/2 - 160/4
+	if (x > 160) {
+		s.offX = x/2 - 160/2
 	}
 
 	if (y > 144) {

@@ -4,13 +4,15 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <termios.h>
-#include <linux/kd.h>
+#include <sys/kbio.h>
 #include <sys/ioctl.h>
 
 static struct termios tty_old;
 static int kbd_old;
 static int initialized = 0;
 
+//TODO: make this cross platform
+//TODO: write in Go instead of C
 int kbd_init() {
 	struct termios tty_attr;
 	int flags;

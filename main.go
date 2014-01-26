@@ -152,11 +152,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if (os.Getenv("TERM") != "linux") {
-		fmt.Println("Term Boy can only be run in the Linux console")
-		fmt.Println("(Try pressing CTRL+ALT+F2)")
-		os.Exit(1)
-	}
+	//TODO: Check if running in a virtual console
 
 	if flag.NArg() != 1 {
 		fmt.Println("Please specify the location of a ROM to boot")

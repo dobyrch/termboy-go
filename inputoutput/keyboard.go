@@ -138,7 +138,6 @@ func (k *KeyHandler) keyEvent(key byte) {
 }
 
 func (k *KeyHandler) RestoreKeyboard() error {
-	//TODO: only restore if keyboard has been initialized first
 	C.kbd_restore()
 	return nil
 }

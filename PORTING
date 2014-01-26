@@ -1,0 +1,12 @@
+FreeBSD
+=======
+
+*See <http://www.freebsd.org/doc/handbook/consoles.html> for instructions on
+ how to change the resolution of the console.
+
+*Currently the directory ~/.config/termboy must be created manually; the logic
+ responsible for setting up 'SettingsDir' in config.go needs fixing.
+
+*More research on setting the console font to a smaller size is needed.
+
+*Need to look into conditional compilation of C code using Go
