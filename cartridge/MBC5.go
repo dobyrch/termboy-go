@@ -2,9 +2,9 @@ package cartridge
 
 import (
 	"fmt"
-	"strings"
 	"github.com/dobyrch/termboy-go/types"
 	"github.com/dobyrch/termboy-go/utils"
+	"strings"
 )
 
 //Represents MBC5

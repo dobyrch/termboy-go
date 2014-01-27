@@ -28,7 +28,7 @@ var state map[pair]pair = make(map[pair]pair)
 
 func PutRune(r rune, x, y int) {
 	if (state[pair{x, y}] != pair{fg, bg}) {
-		fmt.Printf("%c[%d;%dH", ESC, y + 1, x + 1)
+		fmt.Printf("%c[%d;%dH", ESC, y+1, x+1)
 		fmt.Print(colorize(r))
 		state[pair{x, y}] = pair{fg, bg}
 	}

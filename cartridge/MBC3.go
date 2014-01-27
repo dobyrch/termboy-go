@@ -2,9 +2,9 @@ package cartridge
 
 import (
 	"fmt"
-	"strings"
 	"github.com/dobyrch/termboy-go/types"
 	"github.com/dobyrch/termboy-go/utils"
+	"strings"
 )
 
 //Represents MBC3
@@ -75,7 +75,7 @@ func (m *MBC3) Write(addr types.Word, value byte) {
 		m.switchRAMBank(int(value & 0x03))
 	//case addr >= 0x6000 && addr <= 0x7FFF:
 	// RTC stuff....
-	//	return
+	//return
 	case addr >= 0xA000 && addr <= 0xBFFF:
 		if m.hasRAM && m.ramEnabled {
 			m.ramBanks[m.selectedRAMBank][addr-0xA000] = value

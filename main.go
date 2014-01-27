@@ -1,25 +1,25 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"github.com/dobyrch/termboy-go/apu"
 	"github.com/dobyrch/termboy-go/cartridge"
 	"github.com/dobyrch/termboy-go/cpu"
-	"flag"
-	"fmt"
 	"github.com/dobyrch/termboy-go/gpu"
 	"github.com/dobyrch/termboy-go/inputoutput"
 	//TODO: create logging scheme that doesn't write over screen
 	//TODO: ensure that all fatal logs run Poweroff!
-	"log"
 	"github.com/dobyrch/termboy-go/mmu"
+	"github.com/dobyrch/termboy-go/timer"
+	"github.com/dobyrch/termboy-go/types"
+	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"runtime"
 	"syscall"
 	"time"
-	"github.com/dobyrch/termboy-go/timer"
-	"github.com/dobyrch/termboy-go/types"
 )
 
 const FRAME_CYCLES = 70224
@@ -28,12 +28,12 @@ const TITLE string = "termboy"
 var VERSION string
 
 type GameBoy struct {
-	gpu                    *gpu.GPU
-	cpu                    *cpu.CPU
-	mmu                    *mmu.MMU
-	io                     *inputoutput.IO
-	apu                    *apu.APU
-	timer                  *timer.Timer
+	gpu   *gpu.GPU
+	cpu   *cpu.CPU
+	mmu   *mmu.MMU
+	io    *inputoutput.IO
+	apu   *apu.APU
+	timer *timer.Timer
 	//debugOptions           *DebugOptions
 	config                 Config
 	cpuClockAcc            int
@@ -79,7 +79,7 @@ func (gb *GameBoy) DoFrame() {
 		}*/
 
 		if gb.config.DumpState && !gb.cpu.Halted {
-//			fmt.Println(gb.cpu)
+			//fmt.Println(gb.cpu)
 		}
 		gb.Step()
 	}
@@ -104,7 +104,7 @@ func (gb *GameBoy) Step() {
 
 			//put the GPU in color mode if cartridge is ColorGB and user has specified color GB mode
 			gb.SetHardwareMode(gb.config.ColorMode)
-//			log.Println("Finished GB boot program, launching game...")
+			//log.Println("Finished GB boot program, launching game...")
 		}
 	}
 }
@@ -118,7 +118,7 @@ func (gb *GameBoy) Run() {
 		if gb.config.DisplayFPS {
 			if time.Since(currentTime) >= (1 * time.Second) {
 				gb.StoreFPSSample(gb.frameCount / 1.0)
-//				log.Println("Average frames per second:", gb.averageFramesPerSecond)
+				//log.Println("Average frames per second:", gb.averageFramesPerSecond)
 				currentTime = time.Now()
 				gb.frameCount = 0
 			}
@@ -140,8 +140,8 @@ func (gb *GameBoy) StoreFPSSample(sample int) {
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
-//	fmt.Printf("%s. %s\n", TITLE, VERSION)
-//	fmt.Println(strings.Repeat("*", 120))
+	//fmt.Printf("%s. %s\n", TITLE, VERSION)
+	//fmt.Println(strings.Repeat("*", 120))
 
 	flag.Usage = PrintHelp
 
@@ -152,7 +152,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if (os.Getenv("TERM") != "linux") {
+	if os.Getenv("TERM") != "linux" {
 		fmt.Println("Term Boy can only be run in the Linux console")
 		fmt.Println("(Try pressing CTRL+ALT+F2)")
 		os.Exit(1)
@@ -177,10 +177,10 @@ func main() {
 	//command line flags take precedence
 	conf.OverrideConfigWithAnySetFlags()
 
-//	fmt.Println(conf)
+	//fmt.Println(conf)
 	romFilename := flag.Arg(0)
 
-	cart, err := cartridge.NewCartridge(romFilename);
+	cart, err := cartridge.NewCartridge(romFilename)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -199,7 +199,7 @@ func main() {
 	//gb.debugOptions.Init(gb.config.DumpState)
 
 	/*if gb.config.Debug {
-//		log.Println("Emulator will start in debug mode")
+		//log.Println("Emulator will start in debug mode")
 		gb.debugOptions.debuggerOn = true
 
 		//set breakpoint if defined
@@ -207,7 +207,7 @@ func main() {
 			log.Panicln("Cannot parse breakpoint:", gb.config.BreakOn, "\n\t", err)
 		} else {
 			gb.debugOptions.breakWhen = types.Word(b)
-//			log.Println("Emulator will break into debugger when PC = ", gb.debugOptions.breakWhen)
+			//log.Println("Emulator will break into debugger when PC = ", gb.debugOptions.breakWhen)
 		}
 	}*/
 
@@ -221,10 +221,10 @@ func main() {
 	gb.gpu.LinkScreen(gb.io.ScreenOutputChannel)
 	gb.setupBoot()
 
-//	log.Println("Completed setup")
-//	log.Println(strings.Repeat("*", 120))
+	//log.Println("Completed setup")
+	//log.Println(strings.Repeat("*", 120))
 
-//	log.Println("Starting emulator")
+	//log.Println("Starting emulator")
 
 	//TODO: Move signal handling to a more appropriate place (inputoutput)
 	sigc := make(chan os.Signal, 1)
@@ -237,7 +237,6 @@ func main() {
 		<-sigc
 		gb.Poweroff()
 	}()
-
 
 	//Start emulator code in a goroutine
 	go gb.Run()
@@ -252,10 +251,10 @@ func main() {
 
 func (gb *GameBoy) setupBoot() {
 	if gb.config.SkipBoot {
-//		log.Println("Boot sequence disabled")
+		//log.Println("Boot sequence disabled")
 		gb.setupWithoutBoot()
 	} else {
-//		log.Println("Boot sequence enabled")
+		//log.Println("Boot sequence enabled")
 		gb.setupWithBoot()
 	}
 }
@@ -338,15 +337,15 @@ func (gb *GameBoy) Poweroff() {
 }
 
 /*func (gb *GameBoy) Pause() {
-//	log.Println("DEBUGGER: Breaking because PC ==", gb.debugOptions.breakWhen)
+	//log.Println("DEBUGGER: Breaking because PC ==", gb.debugOptions.breakWhen)
 	b := bufio.NewWriter(os.Stdout)
 	r := bufio.NewReader(os.Stdin)
 
-//	fmt.Fprintln(b, "Debug mode, type ? for help")
+	//fmt.Fprintln(b, "Debug mode, type ? for help")
 	for gb.debugOptions.debuggerOn {
 		var instruction string
 		b.Flush()
-//		fmt.Fprint(b, "> ")
+		//fmt.Fprint(b, "> ")
 		b.Flush()
 		instruction, _ = r.ReadString('\n')
 		b.Flush()
@@ -363,14 +362,14 @@ func (gb *GameBoy) Poweroff() {
 		if v, ok := gb.debugOptions.debugFuncMap[command]; ok {
 			v(gb, instructions[1:]...)
 		} else {
-//			fmt.Fprintln(b, "Unknown command:", command)
-//			fmt.Fprintln(b, "Debug mode, type ? for help")
+			//fmt.Fprintln(b, "Unknown command:", command)
+			//fmt.Fprintln(b, "Debug mode, type ? for help")
 		}
 	}
 }*/
 
 func (gb *GameBoy) Reset() {
-//	log.Println("Resetting system")
+	//log.Println("Resetting system")
 	gb.cpu.Reset()
 	gb.gpu.Reset()
 	gb.mmu.Reset()
@@ -380,7 +379,7 @@ func (gb *GameBoy) Reset() {
 	gb.setupBoot()
 }
 
-var BOOTROM []byte = []byte {
+var BOOTROM []byte = []byte{
 	0x31, 0xFE, 0xFF, 0xAF, 0x21, 0xFF, 0x9F, 0x32, 0xCB, 0x7C, 0x20, 0xFB, 0x21, 0x26, 0xFF, 0x0E,
 	0x11, 0x3E, 0x80, 0x32, 0xE2, 0x0C, 0x3E, 0xF3, 0xE2, 0x32, 0x3E, 0x77, 0x77, 0x3E, 0xFC, 0xE0,
 	0x47, 0x11, 0xa8, 0x00, 0x21, 0x10, 0x80, 0x1A, 0xCD, 0x95, 0x00, 0xCD, 0x96, 0x00, 0x13, 0x7B,

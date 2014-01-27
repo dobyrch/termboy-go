@@ -1,39 +1,39 @@
 package inputoutput
 
 import (
+	"github.com/dobyrch/termboy-go/ansi"
+	"github.com/dobyrch/termboy-go/types"
 	"os/exec"
 	"syscall"
 	"unsafe"
-	"github.com/dobyrch/termboy-go/ansi"
-	"github.com/dobyrch/termboy-go/types"
 )
 
 type Display struct {
-        Name                 string
-        ScreenSizeMultiplier int
+	Name                 string
+	ScreenSizeMultiplier int
 	offX                 int
 	offY                 int
 }
 
 func (s *Display) init() {
-        if err := exec.Command("setfont", "-h4").Run(); err != nil {
-                panic("Failed to set font height")
-        }
+	if err := exec.Command("setfont", "-h4").Run(); err != nil {
+		panic("Failed to set font height")
+	}
 
 	ansi.HideCursor()
 	ansi.ClearScreen()
-        ansi.DefineColor(ansi.BLACK, 0x000000)
-        ansi.DefineColor(ansi.BLUE, 0x555555)
-        ansi.DefineColor(ansi.CYAN, 0xAAAAAA)
-        ansi.DefineColor(ansi.WHITE, 0xFFFFFF)
+	ansi.DefineColor(ansi.BLACK, 0x000000)
+	ansi.DefineColor(ansi.BLUE, 0x555555)
+	ansi.DefineColor(ansi.CYAN, 0xAAAAAA)
+	ansi.DefineColor(ansi.WHITE, 0xFFFFFF)
 	s.initOffset()
 }
 
 func (s *Display) drawFrame(screenData *types.Screen) {
-        for y := 0; y < SCREEN_HEIGHT; y ++ {
-                for x := 0; x < SCREEN_WIDTH; x += 2 {
-                        c1 := screenData[y][x]
-                        c2 := screenData[y][x+1]
+	for y := 0; y < SCREEN_HEIGHT; y++ {
+		for x := 0; x < SCREEN_WIDTH; x += 2 {
+			c1 := screenData[y][x]
+			c2 := screenData[y][x+1]
 
 			var fg, bg int
 
@@ -61,11 +61,10 @@ func (s *Display) drawFrame(screenData *types.Screen) {
 
 			ansi.SetForeground(fg)
 			ansi.SetBackground(bg)
-			ansi.PutRune('▌', x/2 + s.offX, y + s.offY)
-                }
-        }
+			ansi.PutRune('▌', x/2+s.offX, y+s.offY)
+		}
+	}
 }
-
 
 func (s *Display) initOffset() {
 	var dimensions [4]uint16
@@ -77,15 +76,14 @@ func (s *Display) initOffset() {
 	x := int(dimensions[1])
 	y := int(dimensions[0])
 
-	if (x > 160/2) {
+	if x > 160/2 {
 		s.offX = x/2 - 160/4
 	}
 
-	if (y > 144) {
+	if y > 144 {
 		s.offY = y/2 - 144/2
 	}
 }
-
 
 func (s *Display) CleanUp() {
 	ansi.ClearScreen()

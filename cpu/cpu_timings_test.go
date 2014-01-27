@@ -2,14 +2,14 @@ package cpu
 
 import (
 	"bufio"
-	"github.com/dobyrch/termboy-go/cartridge"
 	"fmt"
+	"github.com/dobyrch/termboy-go/cartridge"
+	"github.com/dobyrch/termboy-go/types"
+	"github.com/dobyrch/termboy-go/utils"
 	"log"
 	"net"
 	"strconv"
 	"testing"
-	"github.com/dobyrch/termboy-go/types"
-	"github.com/dobyrch/termboy-go/utils"
 )
 
 var c *GbcCPU
@@ -23,9 +23,9 @@ func AssertTimings(c *GbcCPU, t *testing.T, instr byte, expectedTiming int, isCB
 	tick := c.Step()
 
 	if isCB {
-//		log.Println("0xCB "+utils.ByteToString(instr)+" ("+c.CurrentInstruction.Description+")", "testing that instruction runs for", expectedTiming, "cycles")
+		//log.Println("0xCB "+utils.ByteToString(instr)+" ("+c.CurrentInstruction.Description+")", "testing that instruction runs for", expectedTiming, "cycles")
 	} else {
-//		log.Println(utils.ByteToString(instr)+" ("+c.CurrentInstruction.Description+")", "testing that instruction runs for", expectedTiming, "cycles")
+		//log.Println(utils.ByteToString(instr)+" ("+c.CurrentInstruction.Description+")", "testing that instruction runs for", expectedTiming, "cycles")
 	}
 
 	if tick != expectedTiming {
@@ -41,7 +41,7 @@ func AssertTimings(c *GbcCPU, t *testing.T, instr byte, expectedTiming int, isCB
 
 func RunCBInstrAndAssertTimings(instr byte, flags []int, t *testing.T) {
 	before()
-	//	expectedTiming += 4 //+4 because CB adds another cycle
+	//expectedTiming += 4 //+4 because CB adds another cycle
 	c.PC = 0x0000
 	c.WriteByte(c.PC, 0xCB)
 	c.WriteByte(c.PC+1, instr)
@@ -82,7 +82,7 @@ func RunInstrAndAssertTimings(instr byte, flags []int, t *testing.T) {
 func getTimingFromInstructionServer(instr byte) int {
 	conn, err := net.Dial("tcp", "localhost:8012")
 	if err != nil {
-//		fmt.Println("error!")
+		//fmt.Println("error!")
 	}
 	var writer *bufio.Writer = bufio.NewWriter(conn)
 	var reader *bufio.Reader = bufio.NewReader(conn)

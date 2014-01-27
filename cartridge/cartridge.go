@@ -4,10 +4,10 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"github.com/dobyrch/termboy-go/utils"
 	"os"
 	"path/filepath"
 	"strings"
-	"github.com/dobyrch/termboy-go/utils"
 )
 
 const (

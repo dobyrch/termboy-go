@@ -1,9 +1,9 @@
 package inputoutput
 
 import (
+	"github.com/dobyrch/termboy-go/types"
 	"io"
 	"os"
-	"github.com/dobyrch/termboy-go/types"
 )
 
 const PREFIX string = "IO"
@@ -44,9 +44,9 @@ func (i *IO) Run() {
 		case data := <-i.ScreenOutputChannel:
 			i.Display.drawFrame(data)
 		//case data := <-i.AudioOutputChannel:
-//			log.Println("Writing %d to audio!", data)
+		//log.Println("Writing %d to audio!", data)
 		case data := <-i.KeyboardInputChannel:
-			if (data == 0x1) {
+			if data == 0x1 {
 				return //Stop if ESC pressed
 			} else {
 				i.KeyHandler.keyEvent(data)
@@ -56,12 +56,12 @@ func (i *IO) Run() {
 }
 
 func (i *IO) pollStdin() {
-        var b = make([]byte, 1)
+	var b = make([]byte, 1)
 
-        for {
-                _, err := io.ReadFull(os.Stdin, b)
-                if (err == nil) {
+	for {
+		_, err := io.ReadFull(os.Stdin, b)
+		if err == nil {
 			i.KeyboardInputChannel <- b[0]
-                }
-        }
+		}
+	}
 }
