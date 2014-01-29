@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-type RTC struct {
+type RealTimeClock struct {
 	Second  byte
 	s       byte
 	Minute  byte
@@ -17,8 +17,8 @@ type RTC struct {
 	ticker  *time.Ticker
 }
 
-func NewRTC() *RTC {
-	rtc := new(RTC)
+func NewRealTimeClock() *RealTimeClock {
+	rtc := new(RealTimeClock)
 	rtc.ticker = time.NewTicker(time.Second)
 
 	go func() {
@@ -41,32 +41,32 @@ func NewRTC() *RTC {
 	return rtc
 }
 
-func (rtc *RTC) SetSecond(s byte) {
+func (rtc *RealTimeClock) SetSecond(s byte) {
 	if s >= 60 {
 		s = 0
 	}
 	rtc.s = s
 }
 
-func (rtc *RTC) SetMinute(m byte) {
+func (rtc *RealTimeClock) SetMinute(m byte) {
 	if m >= 60 {
 		m = 0
 	}
 	rtc.m = m
 }
 
-func (rtc *RTC) SetHour(h byte) {
+func (rtc *RealTimeClock) SetHour(h byte) {
 	if h >= 24 {
 		h = 0
 	}
 	rtc.h = h
 }
 
-func (rtc *RTC) SetDay(d byte) {
+func (rtc *RealTimeClock) SetDay(d byte) {
 	rtc.d = d
 }
 
-func (rtc *RTC) Latch() {
+func (rtc *RealTimeClock) Latch() {
 	rtc.Second = rtc.s
 	rtc.Minute = rtc.m
 	rtc.Hour = rtc.h

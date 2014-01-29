@@ -21,7 +21,7 @@ type MBC3 struct {
 	RAMSize         int
 	hasBattery      bool
 	hasTimer        bool
-	timer           *RTC
+	timer           *RealTimeClock
 }
 
 func NewMBC3(rom []byte, romSize int, ramSize int, hasBattery bool, hasTimer bool) *MBC3 {
@@ -44,7 +44,7 @@ func NewMBC3(rom []byte, romSize int, ramSize int, hasBattery bool, hasTimer boo
 	m.romBanks = populateROMBanks(rom, m.ROMSize/0x4000)
 
 	if hasTimer {
-		m.timer = NewRTC()
+		m.timer = NewRealTimeClock()
 	}
 
 	return m
