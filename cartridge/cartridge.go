@@ -161,10 +161,10 @@ func (c *Cartridge) String() string {
 	}
 
 	return fmt.Sprintln("\n"+startingString, "Cartridge") +
-		fmt.Sprintln(strings.Repeat("-", 100)) +
+		fmt.Sprintln(strings.Repeat("-", 50)) +
 		fmt.Sprintln(strings.Join(header, "\n")) +
 		fmt.Sprintln(c.MBC) +
-		fmt.Sprintln(strings.Repeat("-", 100))
+		fmt.Sprintln(strings.Repeat("-", 50))
 }
 
 func RetrieveROM(filename string) ([]byte, error) {

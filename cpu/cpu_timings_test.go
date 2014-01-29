@@ -23,9 +23,9 @@ func AssertTimings(c *GbcCPU, t *testing.T, instr byte, expectedTiming int, isCB
 	tick := c.Step()
 
 	if isCB {
-		//log.Println("0xCB "+utils.ByteToString(instr)+" ("+c.CurrentInstruction.Description+")", "testing that instruction runs for", expectedTiming, "cycles")
+		log.Println("0xCB "+utils.ByteToString(instr)+" ("+c.CurrentInstruction.Description+")", "testing that instruction runs for", expectedTiming, "cycles")
 	} else {
-		//log.Println(utils.ByteToString(instr)+" ("+c.CurrentInstruction.Description+")", "testing that instruction runs for", expectedTiming, "cycles")
+		log.Println(utils.ByteToString(instr)+" ("+c.CurrentInstruction.Description+")", "testing that instruction runs for", expectedTiming, "cycles")
 	}
 
 	if tick != expectedTiming {
@@ -82,7 +82,7 @@ func RunInstrAndAssertTimings(instr byte, flags []int, t *testing.T) {
 func getTimingFromInstructionServer(instr byte) int {
 	conn, err := net.Dial("tcp", "localhost:8012")
 	if err != nil {
-		//fmt.Println("error!")
+		log.Println("error!")
 	}
 	var writer *bufio.Writer = bufio.NewWriter(conn)
 	var reader *bufio.Reader = bufio.NewReader(conn)

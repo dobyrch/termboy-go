@@ -5,6 +5,7 @@ package gpu
 import (
 	"fmt"
 	"github.com/dobyrch/termboy-go/types"
+	"log"
 )
 
 type Sprite interface {
@@ -63,7 +64,7 @@ func (s *Sprite8x8) IsScanlineDrawQueueEmpty() bool {
 
 func (s *Sprite8x8) PopScanline() (int, int) {
 	if len(s.ScanlineDrawQueue) == 0 {
-		panic("Scanline queue is empty!")
+		log.Panicln("Scanline queue is empty!")
 	}
 
 	value := s.ScanlineDrawQueue[0]
@@ -85,7 +86,7 @@ func (s *Sprite8x8) ResetScanlineDrawQueue() {
 
 func (s *Sprite8x8) GetTileID(no int) int {
 	if no > 0 {
-		panic("8x8 sprites only consist of one tile")
+		log.Panicln("8x8 sprites only consist of one tile")
 	}
 	return s.TileID
 }
@@ -120,7 +121,7 @@ func (s *Sprite8x16) UpdateSprite(addr types.Word, value byte) {
 
 func (s *Sprite8x16) GetTileID(no int) int {
 	if no > 1 {
-		panic("8x16 sprites only consist of two tiles")
+		log.Panicln("8x16 sprites only consist of two tiles")
 	}
 	return s.TileIDs[no]
 }
@@ -144,7 +145,7 @@ func (s *Sprite8x16) IsScanlineDrawQueueEmpty() bool {
 
 func (s *Sprite8x16) PopScanline() (int, int) {
 	if len(s.ScanlineDrawQueue) == 0 {
-		panic("Scanline queue is empty!")
+		log.Panicln("Scanline queue is empty!")
 	}
 
 	value := s.ScanlineDrawQueue[0]

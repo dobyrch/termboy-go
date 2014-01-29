@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/dobyrch/termboy-go/components"
 	"github.com/dobyrch/termboy-go/constants"
-	//"log"
 	"github.com/dobyrch/termboy-go/types"
+	"log"
 )
 
 const (
@@ -126,7 +126,8 @@ func (timer *Timer) Read(Address types.Word) byte {
 	case TAC_REGISTER:
 		return timer.tacRegister
 	default:
-		panic(fmt.Sprintln("Timer module is not set up to handle address", Address))
+		log.Panicln("Timer module is not set up to handle address ", Address)
+		return 0
 	}
 }
 
@@ -144,12 +145,12 @@ func (timer *Timer) Write(address types.Word, value byte) {
 
 		if oldFrequency != newFrequency {
 			timer.timaCounter.SetFrequency(newFrequency)
-			//log.Println(timer.timaCounter)
+			log.Println(timer.timaCounter)
 		}
 
 		timer.tacRegister = value
 	default:
-		panic(fmt.Sprintln("Timer module is not set up to handle address", address))
+		log.Panicln("Timer module is not set up to handle address ", address)
 	}
 }
 
@@ -164,15 +165,16 @@ func (timer *Timer) GetFrequency(freqId byte) Frequency {
 	case 3:
 		return freq16384
 	default:
-		panic("Unknown frequency!")
+		log.Panicln("Unknown frequency!")
+		return ""
 	}
 }
 
 func (timer *Timer) LinkIRQHandler(m components.IRQHandler) {
 	timer.irqHandler = m
-	//log.Println(timer.Name() + ": Linked IRQ Handler to Timer")
+	log.Println(timer.Name() + ": Linked IRQ Handler to Timer")
 }
 
 func (timer *Timer) Reset() {
-	//log.Println("Resetting", timer.Name())
+	log.Println("Resetting", timer.Name())
 }

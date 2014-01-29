@@ -109,7 +109,7 @@ func NewCPU() *CPU {
 
 func (cpu *CPU) LinkMMU(m mmu.MemoryMappedUnit) {
 	cpu.mmu = m
-	//log.Println(PREFIX, "Linked CPU to MMU")
+	log.Println(PREFIX, "Linked CPU to MMU")
 }
 
 func (cpu *CPU) Validate() error {
@@ -120,7 +120,7 @@ func (cpu *CPU) Validate() error {
 }
 
 func (cpu *CPU) Reset() {
-	//log.Println(PREFIX, "Resetting", NAME)
+	log.Println(PREFIX, "Resetting", NAME)
 	cpu.PC = 0
 	cpu.SP = 0
 	cpu.R.A = 0
@@ -1256,14 +1256,14 @@ func (cpu *CPU) Step() int {
 			Opcode = cpu.ReadByte(cpu.PC)
 			cpu.CurrentInstruction, ok = cpu.DecodeCB(Opcode)
 			if !ok {
-				panic(fmt.Sprintf("No instruction found for opcode: %X\n%s", Opcode, cpu.String()))
+				log.Panicf("No instruction found for opcode: %X\n%s", Opcode, cpu.String())
 			}
 			cpu.CurrentInstruction = cpu.Compile(cpu.CurrentInstruction)
 			cpu.DispatchCB(Opcode)
 		} else {
 			cpu.CurrentInstruction, ok = cpu.Decode(Opcode)
 			if !ok {
-				panic(fmt.Sprintf("No instruction found for opcode: %X\n%s", Opcode, cpu.String()))
+				log.Panicf("No instruction found for opcode: %X\n%s", Opcode, cpu.String())
 			}
 			cpu.CurrentInstruction = cpu.Compile(cpu.CurrentInstruction)
 			cpu.Dispatch(Opcode)
@@ -1320,7 +1320,7 @@ func (cpu *CPU) CheckForInterrupts() bool {
 				cpu.InterruptsEnabled = false
 				return true
 			case interrupt&constants.JOYP_HILO_IRQ == constants.JOYP_HILO_IRQ:
-				//log.Println("JOYP!")
+				log.Println("JOYP!")
 				cpu.mmu.WriteByte(constants.INTERRUPT_FLAG_ADDR, iflag&0xEF)
 				cpu.pushWordToStack(cpu.PC)
 				cpu.PC = types.Word(constants.JOYP_HILO_IR_ADDR)
@@ -1347,9 +1347,9 @@ func (cpu *CPU) SetCPUSpeed() {
 			cpu.Speed = 2
 			cpu.mmu.WriteByte(mmu.CGB_DOUBLE_SPEED_PREP_REG, 0x80)
 		default:
-			panic(fmt.Sprint("Unsupported CPU speed ", cpu.Speed, " this should not happen!"))
+			log.Panicf("Unsupported CPU speed (%d): this should not happen!", cpu.Speed)
 		}
-		//log.Printf("CPU: Setting CPU speed to %dx speed", cpu.Speed)
+		log.Printf("CPU: Setting CPU speed to %dx speed", cpu.Speed)
 	}
 }
 
@@ -1654,7 +1654,7 @@ func (cpu *CPU) HALT() {
 
 //STOP
 func (cpu *CPU) Stop() {
-	//log.Println("CPU: Stopping...")
+	log.Println("CPU: Stopping...")
 	//After a stop instruction is executed, CGB hardware should check to see if the CPU speed should change
 	cpu.SetCPUSpeed()
 }

@@ -5,9 +5,9 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"io/ioutil"
-	//"log"
 	"github.com/dobyrch/termboy-go/utils"
+	"io/ioutil"
+	"log"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -39,19 +39,19 @@ var debug *bool = flag.Bool(DEBUGGER_ON_FLAG, false, "Enable debugger")
 var breakOn *string = flag.String(BREAK_WHEN_FLAG, "0x0000", "Break into debugger when PC equals a given value between 0x0000 and 0xFFFF")
 
 func PrintHelp() {
-	//fmt.Println("\nUsage: -\n")
-	//fmt.Println("To launch the emulator, simply run and pass it the location of your ROM file, e.g. ")
-	//fmt.Println("\n\tgomeboycolor location/of/romfile.gbc\n")
-	//fmt.Println("Flags: -\n")
-	//fmt.Println("	-help			->	Show this help message")
-	//fmt.Println("	-skipboot		->	Disables the boot sequence and will boot you straight into the ROM you have provided. Defaults to false")
-	//fmt.Println("	-color			->	Turns color GB features on. Defaults to true")
-	//fmt.Println("	-showfps		->	Prints average frames per second to the console. Defaults to false")
-	//fmt.Println("	-dump			-> 	Dump CPU state after every cycle. Will be very SLOW and resource intensive. Defaults to false")
-	//fmt.Println("	-size=(1-6)		->	Set screen size. Defaults to 1.")
-	//fmt.Println("	-title=(title)		->	Change window title. Defaults to 'gomeboycolor'.")
-	//fmt.Println("\nYou can pass an option argument to the boolean flags if you want to enable that particular option. e.g. to disable the boot screen you would do the following")
-	//fmt.Println("\n\tgomeboycolor -skipboot=false location/of/romfile.gbc\n")
+	log.Println("\nUsage: -\n")
+	log.Println("To launch the emulator, simply run and pass it the location of your ROM file, e.g. ")
+	log.Println("\n\tgomeboycolor location/of/romfile.gbc\n")
+	log.Println("Flags: -\n")
+	log.Println("	-help			->	Show this help message")
+	log.Println("	-skipboot		->	Disables the boot sequence and will boot you straight into the ROM you have provided. Defaults to false")
+	log.Println("	-color			->	Turns color GB features on. Defaults to true")
+	log.Println("	-showfps		->	Prints average frames per second to the console. Defaults to false")
+	log.Println("	-dump			-> 	Dump CPU state after every cycle. Will be very SLOW and resource intensive. Defaults to false")
+	log.Println("	-size=(1-6)		->	Set screen size. Defaults to 1.")
+	log.Println("	-title=(title)		->	Change window title. Defaults to 'gomeboycolor'.")
+	log.Println("\nYou can pass an option argument to the boolean flags if you want to enable that particular option. e.g. to disable the boot screen you would do the following")
+	log.Println("\n\tgomeboycolor -skipboot=false location/of/romfile.gbc\n")
 }
 
 type Config struct {
@@ -80,7 +80,7 @@ func NewConfig() *Config {
 func (c *Config) LoadConfig() error {
 	settingsFilepath := filepath.Join(c.SettingsDir, "config.json")
 	if ok, _ := utils.Exists(settingsFilepath); ok {
-		//log.Println("Loading configuration from file:", settingsFilepath)
+		log.Println("Loading configuration from file:", settingsFilepath)
 
 		file, err := ioutil.ReadFile(settingsFilepath)
 		if err != nil {
@@ -119,7 +119,7 @@ func (c *Config) LoadConfig() error {
 		c.BreakOn = *breakOn
 		c.DumpState = *dumpState
 	} else {
-		//log.Println("Could not find settings file at", settingsFilepath, "using default values instead...")
+		log.Println("Could not find settings file at", settingsFilepath, "using default values instead...")
 		c.LoadDefaultConfig()
 	}
 	return nil
@@ -166,7 +166,7 @@ func (c *Config) Validate() error {
 
 func (currentConfig *Config) OverrideConfigWithAnySetFlags() {
 	overrideFn := func(f *flag.Flag) {
-		//log.Println("Overriding configuration in settings file for flag: -" + f.Name)
+		log.Println("Overriding configuration in settings file for flag: -" + f.Name)
 		switch f.Name {
 		case SKIP_BOOT_FLAG:
 			currentConfig.SkipBoot = *skipBoot
@@ -201,7 +201,7 @@ func (config *Config) ConfigureSettingsDirectory() error {
 	config.SettingsDir = filepath.Join(usr.HomeDir, ".config/"+TITLE)
 
 	if ok, _ := utils.Exists(config.SettingsDir); !ok {
-		//log.Println("Creating settings directory: ", config.SettingsDir)
+		log.Println("Creating settings directory: ", config.SettingsDir)
 		if err := os.Mkdir(config.SettingsDir, 0755); err != nil {
 			return err
 		}
@@ -210,11 +210,19 @@ func (config *Config) ConfigureSettingsDirectory() error {
 	config.SavesDir = filepath.Join(config.SettingsDir, "saves")
 
 	if ok, _ := utils.Exists(config.SavesDir); !ok {
-		//log.Println("Creating saves directory: ", config.SavesDir)
+		log.Println("Creating saves directory: ", config.SavesDir)
 		if err := os.Mkdir(config.SavesDir, 0755); err != nil {
 			return err
 		}
 	}
+
+	logPath := filepath.Join(config.SettingsDir, "log")
+	logFile, err := os.Create(logPath)
+	if err != nil {
+		return err
+	}
+
+	log.SetOutput(logFile)
 
 	return nil
 }

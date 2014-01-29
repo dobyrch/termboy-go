@@ -7,9 +7,9 @@
 package apu
 
 import (
-	//"log"
 	"github.com/dobyrch/termboy-go/components"
 	"github.com/dobyrch/termboy-go/types"
+	"log"
 )
 
 type APU struct {
@@ -42,5 +42,5 @@ func (apu *APU) LinkIRQHandler(m components.IRQHandler) {
 }
 
 func (apu *APU) Reset() {
-	//log.Println(apu.Name()+": Resetting", apu.Name())
+	log.Println(apu.Name()+": Resetting", apu.Name())
 }

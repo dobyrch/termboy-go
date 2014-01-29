@@ -8,11 +8,10 @@ import (
 	"github.com/dobyrch/termboy-go/cpu"
 	"github.com/dobyrch/termboy-go/gpu"
 	"github.com/dobyrch/termboy-go/inputoutput"
-	//TODO: create logging scheme that doesn't write over screen
-	//TODO: ensure that all fatal logs run Poweroff!
 	"github.com/dobyrch/termboy-go/mmu"
 	"github.com/dobyrch/termboy-go/timer"
 	"github.com/dobyrch/termboy-go/types"
+	//TODO: ensure that all fatal logs run Poweroff!
 	"log"
 	"os"
 	"os/signal"
@@ -79,7 +78,7 @@ func (gb *GameBoy) DoFrame() {
 		}*/
 
 		if gb.config.DumpState && !gb.cpu.Halted {
-			//fmt.Println(gb.cpu)
+			log.Println(gb.cpu)
 		}
 		gb.Step()
 	}
@@ -104,7 +103,7 @@ func (gb *GameBoy) Step() {
 
 			//put the GPU in color mode if cartridge is ColorGB and user has specified color GB mode
 			gb.SetHardwareMode(gb.config.ColorMode)
-			//log.Println("Finished GB boot program, launching game...")
+			log.Println("Finished GB boot program, launching game...")
 		}
 	}
 }
@@ -118,7 +117,7 @@ func (gb *GameBoy) Run() {
 		if gb.config.DisplayFPS {
 			if time.Since(currentTime) >= (1 * time.Second) {
 				gb.StoreFPSSample(gb.frameCount / 1.0)
-				//log.Println("Average frames per second:", gb.averageFramesPerSecond)
+				log.Println("Average frames per second:", gb.averageFramesPerSecond)
 				currentTime = time.Now()
 				gb.frameCount = 0
 			}
@@ -140,11 +139,8 @@ func (gb *GameBoy) StoreFPSSample(sample int) {
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	//fmt.Printf("%s. %s\n", TITLE, VERSION)
-	//fmt.Println(strings.Repeat("*", 120))
 
 	flag.Usage = PrintHelp
-
 	flag.Parse()
 
 	if *help {
@@ -177,7 +173,7 @@ func main() {
 	//command line flags take precedence
 	conf.OverrideConfigWithAnySetFlags()
 
-	//fmt.Println(conf)
+	log.Println(conf)
 	romFilename := flag.Arg(0)
 
 	cart, err := cartridge.NewCartridge(romFilename)
@@ -199,7 +195,7 @@ func main() {
 	//gb.debugOptions.Init(gb.config.DumpState)
 
 	/*if gb.config.Debug {
-		//log.Println("Emulator will start in debug mode")
+		log.Println("Emulator will start in debug mode")
 		gb.debugOptions.debuggerOn = true
 
 		//set breakpoint if defined
@@ -207,7 +203,7 @@ func main() {
 			log.Panicln("Cannot parse breakpoint:", gb.config.BreakOn, "\n\t", err)
 		} else {
 			gb.debugOptions.breakWhen = types.Word(b)
-			//log.Println("Emulator will break into debugger when PC = ", gb.debugOptions.breakWhen)
+			log.Println("Emulator will break into debugger when PC = ", gb.debugOptions.breakWhen)
 		}
 	}*/
 
@@ -221,10 +217,9 @@ func main() {
 	gb.gpu.LinkScreen(gb.io.ScreenOutputChannel)
 	gb.setupBoot()
 
-	//log.Println("Completed setup")
-	//log.Println(strings.Repeat("*", 120))
+	log.Println("Completed setup")
 
-	//log.Println("Starting emulator")
+	log.Println("Starting emulator")
 
 	//TODO: Move signal handling to a more appropriate place (inputoutput)
 	sigc := make(chan os.Signal, 1)
@@ -251,10 +246,10 @@ func main() {
 
 func (gb *GameBoy) setupBoot() {
 	if gb.config.SkipBoot {
-		//log.Println("Boot sequence disabled")
+		log.Println("Boot sequence disabled")
 		gb.setupWithoutBoot()
 	} else {
-		//log.Println("Boot sequence enabled")
+		log.Println("Boot sequence enabled")
 		gb.setupWithBoot()
 	}
 }
@@ -337,15 +332,15 @@ func (gb *GameBoy) Poweroff() {
 }
 
 /*func (gb *GameBoy) Pause() {
-	//log.Println("DEBUGGER: Breaking because PC ==", gb.debugOptions.breakWhen)
+	log.Println("DEBUGGER: Breaking because PC ==", gb.debugOptions.breakWhen)
 	b := bufio.NewWriter(os.Stdout)
 	r := bufio.NewReader(os.Stdin)
 
-	//fmt.Fprintln(b, "Debug mode, type ? for help")
+	log.Fprintln(b, "Debug mode, type ? for help")
 	for gb.debugOptions.debuggerOn {
 		var instruction string
 		b.Flush()
-		//fmt.Fprint(b, "> ")
+		log.Fprint(b, "> ")
 		b.Flush()
 		instruction, _ = r.ReadString('\n')
 		b.Flush()
@@ -362,14 +357,14 @@ func (gb *GameBoy) Poweroff() {
 		if v, ok := gb.debugOptions.debugFuncMap[command]; ok {
 			v(gb, instructions[1:]...)
 		} else {
-			//fmt.Fprintln(b, "Unknown command:", command)
-			//fmt.Fprintln(b, "Debug mode, type ? for help")
+			log.Fprintln(b, "Unknown command:", command)
+			log.Fprintln(b, "Debug mode, type ? for help")
 		}
 	}
 }*/
 
 func (gb *GameBoy) Reset() {
-	//log.Println("Resetting system")
+	log.Println("Resetting system")
 	gb.cpu.Reset()
 	gb.gpu.Reset()
 	gb.mmu.Reset()

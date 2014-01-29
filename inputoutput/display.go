@@ -3,6 +3,7 @@ package inputoutput
 import (
 	"github.com/dobyrch/termboy-go/ansi"
 	"github.com/dobyrch/termboy-go/types"
+	"log"
 	"os/exec"
 	"syscall"
 	"unsafe"
@@ -17,7 +18,7 @@ type Display struct {
 
 func (s *Display) init() {
 	if err := exec.Command("setfont", "-h4").Run(); err != nil {
-		panic("Failed to set font height")
+		log.Panicln("Failed to set font height")
 	}
 
 	ansi.HideCursor()

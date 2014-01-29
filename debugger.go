@@ -33,9 +33,9 @@ type DebugOptions struct {
 }
 
 func (g *DebugOptions) help() {
-	//fmt.Println("Commands are: -")
+	log.Println("Commands are: -")
 	for _, desc := range g.debugHelpStr {
-		//fmt.Println("	-", desc)
+		log.Println("	-", desc)
 	}
 }
 
@@ -45,7 +45,7 @@ func (g *DebugOptions) Init(cpuDumpOnStep bool) {
 	g.watches = make(map[types.Word]byte)
 	g.stepDump = cpuDumpOnStep
 	g.AddDebugFunc("p", "Print CPU state", func(gbc *GomeboyColor, remaining ...string) {
-		//fmt.Println(gbc.cpu)
+		log.Println(gbc.cpu)
 	})
 
 	g.AddDebugFunc("r", "Reset", func(gbc *GomeboyColor, remaining ...string) {
@@ -68,7 +68,7 @@ func (g *DebugOptions) Init(cpuDumpOnStep bool) {
 		var filename string
 		if len(remaining) == 0 {
 			filename = "gfxdump.png"
-			//fmt.Println("No filename provided, defaulting to", filename)
+			log.Println("No filename provided, defaulting to", filename)
 		} else {
 			filename = remaining[0]
 		}
@@ -76,8 +76,8 @@ func (g *DebugOptions) Init(cpuDumpOnStep bool) {
 		f, err := os.Create(filename)
 
 		if err != nil {
-			//fmt.Println("Error creating", filename)
-			//fmt.Println(err)
+			log.Println("Error creating", filename)
+			log.Println(err)
 			return
 		}
 		defer f.Close()
@@ -98,9 +98,9 @@ func (g *DebugOptions) Init(cpuDumpOnStep bool) {
 		draw.Draw(out, image.Rect(512, 0, 1024, 546), tilesImg, image.ZP, draw.Src)
 		draw.Draw(out, image.Rect(1024, 0, 1280, 546), spritesImg, image.ZP, draw.Src)
 
-		//fmt.Println("Dumping to image in file", filename)
+		log.Println("Dumping to image in file", filename)
 		png.Encode(f, out)
-		//fmt.Println("Done!")
+		log.Println("Done!")
 	})
 
 	g.AddDebugFunc("s", "Step", func(gbc *GomeboyColor, remaining ...string) {
@@ -110,42 +110,42 @@ func (g *DebugOptions) Init(cpuDumpOnStep bool) {
 			if err == nil {
 				noOfSteps = int(val)
 			} else {
-				//fmt.Println("Cannot parse argument, assuming 1 step forward instead\n\t", err)
+				log.Println("Cannot parse argument, assuming 1 step forward instead\n\t", err)
 				return
 			}
 		}
-		//fmt.Println("Stepping forward by", noOfSteps, "instruction(s)")
+		log.Println("Stepping forward by", noOfSteps, "instruction(s)")
 		for i := 0; i < noOfSteps; i++ {
 			gbc.Step()
 			if g.stepDump {
-				//fmt.Println(i, ":", gbc.cpu)
+				log.Println(i, ":", gbc.cpu)
 			}
 			g.checkWatches(gbc)
 		}
-		//fmt.Println("Current machine state: -")
-		//fmt.Println(gbc.cpu)
+		log.Println("Current machine state: -")
+		log.Println(gbc.cpu)
 	})
 
 	g.AddDebugFunc("b", "Set breakpoint", func(gbc *GomeboyColor, remaining ...string) {
 		if len(remaining) == 0 {
-			//fmt.Println("You must provide a PC address to break on!")
+			log.Println("You must provide a PC address to break on!")
 			return
 		}
 
 		var arg string = remaining[0]
 
 		if bp, err := ToMemoryAddress(arg); err != nil {
-			//fmt.Println("Could not parse memory address argument:", arg)
-			//fmt.Println("\t", err)
+			log.Println("Could not parse memory address argument:", arg)
+			log.Println("\t", err)
 		} else {
-			//fmt.Println("Setting breakpoint to:", bp)
+			log.Println("Setting breakpoint to:", bp)
 			g.breakWhen = bp
 		}
 	})
 
 	g.AddDebugFunc("reg", "Set register", func(gbc *GomeboyColor, remaining ...string) {
 		if len(remaining) < 2 {
-			//fmt.Println("You must provide a register and value!")
+			log.Println("You must provide a register and value!")
 			return
 		}
 
@@ -153,12 +153,12 @@ func (g *DebugOptions) Init(cpuDumpOnStep bool) {
 		value, err := utils.StringToByte(remaining[1])
 
 		if err != nil {
-			//fmt.Println("Could not parse value", remaining[1])
-			//fmt.Println("\t", err)
+			log.Println("Could not parse value", remaining[1])
+			log.Println("\t", err)
 			return
 		}
 
-		//fmt.Println("Attempting to set register", register, "with value", utils.ByteToString(value))
+		log.Println("Attempting to set register", register, "with value", utils.ByteToString(value))
 		switch register {
 		case "a":
 			gbc.cpu.R.A = value
@@ -175,7 +175,7 @@ func (g *DebugOptions) Init(cpuDumpOnStep bool) {
 		case "l":
 			gbc.cpu.R.L = value
 		default:
-			//fmt.Println("Unknown register:", register)
+			log.Println("Unknown register:", register)
 		}
 	})
 
@@ -183,30 +183,30 @@ func (g *DebugOptions) Init(cpuDumpOnStep bool) {
 		var startAddr types.Word
 		switch len(remaining) {
 		case 0:
-			//fmt.Println("You must provide at least a starting address to inspect")
+			log.Println("You must provide at least a starting address to inspect")
 			return
 		default:
 			addr, err := ToMemoryAddress(remaining[0])
 			if err != nil {
-				//fmt.Println("Could not parse memory address: ", remaining[0])
+				log.Println("Could not parse memory address: ", remaining[0])
 				return
 			}
 			startAddr = addr
 		}
 		lb := startAddr - (startAddr & 0x000F)
 		hb := startAddr + (0x0F - (startAddr & 0x000F))
-		//fmt.Print("\t\t")
+		log.Print("\t\t")
 		for w := lb; w <= hb; w++ {
-			//fmt.Printf("   %X ", byte(w%16))
+			log.Printf("   %X ", byte(w%16))
 
 		}
-		//fmt.Println()
+		log.Println()
 
-		//fmt.Printf("%s\t\t", lb)
+		log.Printf("%s\t\t", lb)
 		for w := lb; w <= hb; w++ {
-			//fmt.Print(utils.ByteToString(gbc.mmu.ReadByte(w)), " ")
+			log.Print(utils.ByteToString(gbc.mmu.ReadByte(w)), " ")
 		}
-		//fmt.Println()
+		log.Println()
 
 	})
 
@@ -215,43 +215,43 @@ func (g *DebugOptions) Init(cpuDumpOnStep bool) {
 		var toAddr types.Word
 		switch len(remaining) {
 		case 0:
-			//fmt.Println("You must provide a byte value and address to write to")
+			log.Println("You must provide a byte value and address to write to")
 			return
 		case 1:
-			//fmt.Println("You must provide a byte value to put in memory")
+			log.Println("You must provide a byte value to put in memory")
 			return
 		default:
 			addr, err := ToMemoryAddress(remaining[0])
 			if err != nil {
-				//fmt.Println("Could not parse memory address: ", remaining[0])
+				log.Println("Could not parse memory address: ", remaining[0])
 				return
 			}
 			val, err := utils.StringToByte(remaining[1])
 			if err != nil {
-				//fmt.Println("Could not parse value: ", remaining[1], err)
+				log.Println("Could not parse value: ", remaining[1], err)
 				return
 			}
 			toAddr = addr
 			value = val
 		}
 
-		//fmt.Println("Writing", utils.ByteToString(value), "to", toAddr)
+		log.Println("Writing", utils.ByteToString(value), "to", toAddr)
 		gbc.mmu.WriteByte(toAddr, value)
 	})
 
 	g.AddDebugFunc("w", "Set memory location to watch for changes", func(gbc *GomeboyColor, remaining ...string) {
 		if len(remaining) == 0 {
-			//fmt.Println("You must provide a memory address to watch!")
+			log.Println("You must provide a memory address to watch!")
 			return
 		}
 
 		var arg string = remaining[0]
 
 		if m, err := ToMemoryAddress(arg); err != nil {
-			//fmt.Println("Could not parse memory address argument:", arg)
-			//fmt.Println("\t", err)
+			log.Println("Could not parse memory address argument:", arg)
+			log.Println("\t", err)
 		} else {
-			//fmt.Println("Watching memory address:", m)
+			log.Println("Watching memory address:", m)
 			value := gbc.mmu.ReadByte(m)
 			g.watches[m] = value
 		}
@@ -271,8 +271,8 @@ func (g *DebugOptions) checkWatches(gbc *GomeboyColor) {
 	for k, oldVal := range g.watches {
 		currentValue := gbc.mmu.ReadByte(k)
 		if oldVal != currentValue {
-			//fmt.Println("Data at memory address", k, "has changed from", utils.ByteToString(oldVal), "to", utils.ByteToString(currentValue))
-			//fmt.Println("Last operation:", gbc.cpu)
+			log.Println("Data at memory address", k, "has changed from", utils.ByteToString(oldVal), "to", utils.ByteToString(currentValue))
+			log.Println("Last operation:", gbc.cpu)
 			g.watches[k] = currentValue
 		}
 	}

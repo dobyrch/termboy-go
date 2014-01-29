@@ -5,16 +5,16 @@ import (
 )
 
 type RTC struct {
-	Second   byte
-	s        byte
-	Minute   byte
-	m        byte
-	Hour     byte
-	h        byte
-	Day      byte
-	d        byte
-	Latched  byte
-	ticker   *time.Ticker
+	Second  byte
+	s       byte
+	Minute  byte
+	m       byte
+	Hour    byte
+	h       byte
+	Day     byte
+	d       byte
+	Latched byte
+	ticker  *time.Ticker
 }
 
 func NewRTC() *RTC {

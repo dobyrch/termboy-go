@@ -3,6 +3,7 @@ package inputoutput
 import (
 	"github.com/dobyrch/termboy-go/types"
 	"io"
+	"log"
 	"os"
 )
 
@@ -43,8 +44,8 @@ func (i *IO) Run() {
 		select {
 		case data := <-i.ScreenOutputChannel:
 			i.Display.drawFrame(data)
-		//case data := <-i.AudioOutputChannel:
-		//log.Println("Writing %d to audio!", data)
+		case data := <-i.AudioOutputChannel:
+			log.Println("Writing %d to audio!", data)
 		case data := <-i.KeyboardInputChannel:
 			if data == 0x1 {
 				return //Stop if ESC pressed

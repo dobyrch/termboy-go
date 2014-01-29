@@ -95,13 +95,18 @@ func (m *MBC3) Write(addr types.Word, value byte) {
 		}
 	case addr >= 0xA000 && addr <= 0xBFFF:
 		if m.hasRAM && m.ramEnabled {
-			if (m.hasTimer) {
+			if m.hasTimer {
 				switch m.selectedRAMBank {
-				case 0x08: m.timer.SetSecond(value)
-				case 0x09: m.timer.SetMinute(value)
-				case 0x0a: m.timer.SetHour(value)
-				case 0x0b: m.timer.SetDay(value)
-				case 0x0c: //TODO: Figure out how day carry works
+				case 0x08:
+					m.timer.SetSecond(value)
+				case 0x09:
+					m.timer.SetMinute(value)
+				case 0x0a:
+					m.timer.SetHour(value)
+				case 0x0b:
+					m.timer.SetDay(value)
+				case 0x0c:
+					//TODO: Figure out how day carry works
 				}
 			}
 
@@ -125,13 +130,18 @@ func (m *MBC3) Read(addr types.Word) byte {
 	//Upper bounds of memory map.
 	if addr >= 0xA000 && addr <= 0xC000 {
 		if m.hasRAM && m.ramEnabled {
-			if (m.hasTimer) {
+			if m.hasTimer {
 				switch m.selectedRAMBank {
-				case 0x08: return m.timer.Second
-				case 0x09: return m.timer.Minute
-				case 0x0a: return m.timer.Hour
-				case 0x0b: return m.timer.Day
-				case 0x0c: return m.timer.Day
+				case 0x08:
+					return m.timer.Second
+				case 0x09:
+					return m.timer.Minute
+				case 0x0a:
+					return m.timer.Hour
+				case 0x0b:
+					return m.timer.Day
+				case 0x0c:
+					return m.timer.Day
 				}
 			}
 
