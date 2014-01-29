@@ -15,6 +15,7 @@ const (
 	MBC_1                 = 0x01
 	MBC_1_RAM             = 0x02
 	MBC_1_RAM_BATT        = 0x03
+	MBC_3_RAM_BATT_TIMER  = 0x10
 	MBC_3_RAM_BATT        = 0x13
 	MBC_5                 = 0x19
 	MBC_5_RAM             = 0x1A
@@ -34,6 +35,7 @@ var CartridgeTypes map[byte]CartridgeType = map[byte]CartridgeType{
 	MBC_1:                 CartridgeType{MBC_1, "ROM+MBC1"},
 	MBC_1_RAM:             CartridgeType{MBC_1_RAM, "ROM+MBC1+RAM"},
 	MBC_1_RAM_BATT:        CartridgeType{MBC_1_RAM_BATT, "ROM+MBC1+RAM+BATT"},
+	MBC_3_RAM_BATT_TIMER:  CartridgeType{MBC_3_RAM_BATT_TIMER, "ROM+MBC3+RAM+BATT+TIMER"},
 	MBC_3_RAM_BATT:        CartridgeType{MBC_3_RAM_BATT, "ROM+MBC3+RAM+BATT"},
 	MBC_5:                 CartridgeType{MBC_5, "ROM+MBC5"},
 	MBC_5_RAM:             CartridgeType{MBC_5_RAM, "ROM+MBC5+RAM"},
@@ -116,7 +118,9 @@ func (c *Cartridge) Init(rom []byte) error {
 	case MBC_1_RAM_BATT:
 		c.MBC = NewMBC1(rom, c.ROMSize, c.RAMSize, true)
 	case MBC_3_RAM_BATT:
-		c.MBC = NewMBC3(rom, c.ROMSize, c.RAMSize, true)
+		c.MBC = NewMBC3(rom, c.ROMSize, c.RAMSize, true, false)
+	case MBC_3_RAM_BATT_TIMER:
+		c.MBC = NewMBC3(rom, c.ROMSize, c.RAMSize, true, true)
 	case MBC_5, MBC_5_RAM, MBC_5_RUMBLE, MBC_5_RAM_RUMBLE:
 		c.MBC = NewMBC5(rom, c.ROMSize, c.RAMSize, false)
 	case MBC_5_RAM_BATT, MBC_5_RAM_BATT_RUMBLE:

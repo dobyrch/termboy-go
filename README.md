@@ -19,7 +19,7 @@ Usage
 
 If you're an Arch Linux user, you can download Term Boy from the
 [AUR](https://aur.archlinux.org/packages/termboy).  After compilation, the
-binary will be installed at /usr/bin/termboy.
+binary will be installed as */usr/bin/termboy*.
 
 Users of other distros can download and build Term Boy by running
 `go get github.com/dobyrch/termboy-go`.  Start Term Boy by running
@@ -32,9 +32,9 @@ Miscellanea
 
 Ubuntu users may see the message "Failed to set font height."  Term Boy uses
 the `setfont` command to change the font height, which looks for the font
-*default8x16.psfu* in /usr/share/consolefonts.  The font can be downloaded from
+*default8x16.psfu* in */usr/share/consolefonts*.  The font can be downloaded from
 the [Kbd project](http://kbd-project.org/download/).  Download any of the
-archives and the font will be located in data/consolefonts.
+archives and the font will be located in *data/consolefonts*.
 
 A branch for FreeBSD is also available (`git checkout freebsd`).  See PORTING
 for more details.
@@ -42,7 +42,7 @@ for more details.
 Sound is not yet supported.  If you want sound now, try out my other
 [implementation](https://github.com/dobyrch/termboy).
 
-If you would like to see how I generated a custom boot ROM (to show "Term Boy"
+If you would like to see how I generated a custom boot ROM (that shows "Term Boy"
 in place of "Nintendo"), see
 [bootrom-gen](https://github.com/dobyrch/bootrom-gen).
 
