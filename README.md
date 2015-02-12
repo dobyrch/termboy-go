@@ -9,6 +9,8 @@ in C++) is available [here](https://github.com/dobyrch/termboy).
 This project is based on code from an existing Game Boy Color emulator,
 [gomeboycolor](https://github.com/djhworld/gomeboycolor).
 
+Be sure to also check out [libtermboy](https://github.com/dobyrch/libtermboy), which distills the techniques used to implement Term Boy into a reusable library (with color support!).
+
 ![Boot](screenshots/screen_0.png)
 ![Intro](screenshots/screen_1.png)
 ![Title](screenshots/screen_2.png)
