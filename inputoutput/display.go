@@ -16,10 +16,6 @@ type Display struct {
 }
 
 func (s *Display) init() {
-        if err := exec.Command("setfont", "-h4").Run(); err != nil {
-                panic("Failed to set font height")
-        }
-
 	ansi.HideCursor()
 	ansi.ClearScreen()
         ansi.DefineColor(ansi.BLACK, 0x000000)
@@ -79,5 +75,4 @@ func (s *Display) CleanUp() {
 	ansi.ShowCursor()
 	ansi.SetForeground(ansi.BLACK)
 	ansi.SetBackground(ansi.BRIGHT | ansi.WHITE)
-	exec.Command("setfont").Run()
 }
